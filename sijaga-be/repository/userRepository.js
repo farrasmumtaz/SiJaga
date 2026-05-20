@@ -9,9 +9,9 @@ const getUserById = async (userId) => {
 };
 
 // Update user profile
-const updateUserProfile = async (userId, name, email, card_id) => {
+const updateUserProfile = async (userId, name, email, status, card_id) => {
   try {
-    console.log("Updating user with values:", { userId, name, email, card_id });
+    console.log("Updating user with values:", { userId, name, email, status, card_id });
 
     // Perform the update query
     const updatedUser = await prisma.user.update({
@@ -21,7 +21,8 @@ const updateUserProfile = async (userId, name, email, card_id) => {
       data: {
         name: name,        // Update name field
         email: email,      // Update email field
-        card_id: card_id   // Update card_id field
+        status: status,   // Set status to "pending" after update
+        card_id: card_id  // Update card_id field
       }
     });
 

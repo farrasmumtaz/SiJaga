@@ -20,8 +20,9 @@ const registerUser = async (name, email, cardId, hashedPassword) => {
     data: {
       name,
       email,
-      card_id: cardId,
       password: hashedPassword,
+      status: "PENDING",
+      card_id: cardId,
     },
   });
   return user;

@@ -11,8 +11,8 @@ const getUserDetailsService = async (userId) => {
 };
 
 // Update user profile
-const updateUserProfileService = async (userId, name, email, cardId) => {
-  const updatedUser = await updateUserProfile(userId, name, email, cardId);
+const updateUserProfileService = async (userId, name, email, status, cardId) => {
+  const updatedUser = await updateUserProfile(userId, name, email, status, cardId);
   return updatedUser;
 };
 

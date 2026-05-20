@@ -5,17 +5,17 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   name     String
-  email    String @unique
-  card_id  String @unique
-  password String  // Store the hashed password
+  email    String  @unique
+  password String
+  status   String? @default("PENDING")
+  card_id  String  @unique
 
-  @@map("users")  // The table name in the DB will be "users"
+  @@map("users")
 }
 
 model UsageHistory {
@@ -25,22 +25,22 @@ model UsageHistory {
   status    String
   card_id   String
 
-  @@map("usage_history")  // The table name in the DB will be "usage_history"
+  @@map("usage_history")
 }
 
 model CardIdDumps {
   id      Int    @id @default(autoincrement())
   card_id String @unique
 
-  @@map("card_id_dumps")  // The table name in the DB will be "card_id_dumps"
+  @@map("card_id_dumps")
 }
 
 model BlacklistedToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
-  createdAt DateTime @default(now()) // Tracks when the token was blacklisted
+  createdAt DateTime @default(now())
 
-  @@map("blacklisted_tokens") // Table for blacklisted tokens
+  @@map("blacklisted_tokens")
 }
 
 model LockedStatus {
@@ -48,5 +48,5 @@ model LockedStatus {
   status    String
   Timestamp DateTime @default(now())
 
-  @@map("locked_status") // The table name in the DB will be "locked_status"
+  @@map("locked_status")
 }

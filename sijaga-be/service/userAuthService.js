@@ -11,12 +11,26 @@ const jwt = require("jsonwebtoken");
 // Register a new user
 const registerUserService = async (name, email, cardId, password) => {
   const cardAvailable = await isCardIdAvailable(cardId);
+
   if (!cardAvailable) {
     throw new Error("The card ID is not available in the database.");
   }
 
+  const existingUser = await getUserByEmail(email);
+
+  if (existingUser) {
+    throw new Error("Email already registered.");
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await registerUser(name, email, cardId, hashedPassword);
+
+  const user = await registerUser(
+    name,
+    email,
+    cardId,
+    hashedPassword
+  );
+
   return user;
 };
 
@@ -24,13 +38,18 @@ const registerUserService = async (name, email, cardId, password) => {
 const loginUserService = async (email, password) => {
   const user = await getUserByEmail(email);
   if (!user) {
-      throw new Error("Invalid email or password.");
+    throw new Error("Invalid email or password.");
   }
 
   // Compare the entered password with the stored hashed password
   const isPasswordValid = await bcrypt.compare(password, user.password);
+
   if (!isPasswordValid) {
-      throw new Error("Invalid email or password.");
+    throw new Error("Invalid email or password.");
+  }
+
+  if (user.status !== "APPROVED") {
+    throw new Error("Your account is not approved yet.");
   }
 
   // Create JWT token
@@ -39,15 +58,16 @@ const loginUserService = async (email, password) => {
 
   // Return user details first, then token
   return {
-      success: true,
-      message: "Login successful",
-      user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          cardId: user.card_id
-      },
-      token: token
+    success: true,
+    message: "Login successful",
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      status: user.status,
+      cardId: user.card_id
+    },
+    token: token
   };
 };
 

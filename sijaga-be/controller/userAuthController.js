@@ -6,7 +6,7 @@ const {
 
 // Register user
 const registerUserController = async (req, res) => {
-  const { name, email, card_id, password } = req.body;
+  const { name, email, password, status, card_id } = req.body;
 
   if (!card_id) {
     return res.status(400).json({
