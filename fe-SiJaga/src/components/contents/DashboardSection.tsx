@@ -195,10 +195,10 @@ const DashboardSection = () => {
   
       const responseData = await response.json();
       console.log("Availability response:", responseData);
-      if (responseData.status && responseData.status.status) {
-        setAvailableStatus(responseData.status);  
+      if (responseData.status?.status?.startsWith("LOCKED_")) {
+        setAvailableStatus("ADA BARANG");
       } else {
-        setAvailableStatus("Tidak ditemukan");
+        setAvailableStatus("TIDAK ADA BARANG");
       }
     } catch (error) {
       console.error("Error fetching availability data:", error);

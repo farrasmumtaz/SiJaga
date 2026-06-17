@@ -52,10 +52,19 @@ const isTokenBlacklisted = async (token) => {
   return !!blacklisted; // Returns true if token is blacklisted
 };
 
+const getUserByCardId = async (cardId) => {
+  return await prisma.user.findFirst({
+    where: {
+      card_id: cardId
+    }
+  });
+};
+
 module.exports = {
   isCardIdAvailable,
   registerUser,
   getUserByEmail,
+  getUserByCardId,
   blacklistToken,
   isTokenBlacklisted,
 };

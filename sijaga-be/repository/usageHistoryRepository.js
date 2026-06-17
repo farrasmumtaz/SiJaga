@@ -81,6 +81,63 @@ const getLatestLockedStatus = async () => {
   });
 };
 
+const processLockerAccess = async (card_id) => {
+  const user =
+    await prisma.user.findUnique({
+      where: {
+        card_id
+      }
+    });
+
+  if (!user) {
+    return {
+      success: false,
+      action: "DENIED",
+      message: "Card not registered"
+    };
+  }
+  const latestStatus = await getLatestLockedStatus();
+
+  // kalau belum ada status
+  if (!latestStatus || latestStatus.status === "UNLOCKED") {
+
+    // owner baru
+    await createLockedStatus(`LOCKED_${card_id}`);
+
+    await addUsageHistory(card_id, "STORE_ITEM");
+
+    return {
+      success: true,
+      action: "OPEN",
+      message: "Locker opened for storing item"
+    };
+  }
+
+  // cek owner
+  if (latestStatus.status === `LOCKED_${card_id}`) {
+
+    // owner ambil barang
+    await createLockedStatus("UNLOCKED");
+
+    await addUsageHistory(card_id, "TAKE_ITEM");
+
+    return {
+      success: true,
+      action: "OPEN",
+      message: "Locker opened for owner"
+    };
+  }
+
+  // bukan owner
+  await addUsageHistory(card_id, "ACCESS_DENIED");
+
+  return {
+    success: false,
+    action: "DENIED",
+    message: "Access denied"
+  };
+};
+
 module.exports = {
   getAllUsers,
   addUsageHistory,
@@ -89,5 +146,6 @@ module.exports = {
   getTop3NamesFromUsageHistory,
   getTop3TimestampsFromUsageHistory,
   createLockedStatus,
-  getLatestLockedStatus
+  getLatestLockedStatus,
+  processLockerAccess
 };

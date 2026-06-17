@@ -2,38 +2,61 @@ const {
   isCardIdAvailable,
   registerUser,
   getUserByEmail,
+  getUserByCardId,
   blacklistToken,
   isTokenBlacklisted,
 } = require("../repository/userAuthRepository");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const {
+  addUsageHistory
+} = require("../repository/usageHistoryRepository");
 
 // Register a new user
-const registerUserService = async (name, email, cardId, password) => {
-  const cardAvailable = await isCardIdAvailable(cardId);
+const registerUserService = async (
+  name,
+  email,
+  cardId,
+  password
+) => {
+
+  const cardAvailable =
+    await isCardIdAvailable(cardId);
 
   if (!cardAvailable) {
-    throw new Error("The card ID is not available in the database.");
+    throw new Error(
+      "The card ID is not available in the database."
+    );
   }
 
-  const existingUser = await getUserByEmail(email);
+  const existingUser =
+    await getUserByEmail(email);
 
   if (existingUser) {
-    throw new Error("Email already registered.");
+    throw new Error(
+      "Email already registered."
+    );
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const existingCard =
+    await getUserByCardId(cardId);
 
-  const user = await registerUser(
+  if (existingCard) {
+    throw new Error(
+      "Card sudah terdaftar."
+    );
+  }
+
+  const hashedPassword =
+    await bcrypt.hash(password, 10);
+
+  return await registerUser(
     name,
     email,
     cardId,
     hashedPassword
   );
-
-  return user;
-};
-
+};  
 // Login user
 const loginUserService = async (email, password) => {
   const user = await getUserByEmail(email);
@@ -51,6 +74,10 @@ const loginUserService = async (email, password) => {
   if (user.status !== "APPROVED") {
     throw new Error("Your account is not approved yet.");
   }
+  await addUsageHistory(
+    user.card_id,
+    "LOGIN"
+  );
 
   // Create JWT token
   const payload = { id: user.id, name: user.name, email: user.email, card_id: user.card_id };

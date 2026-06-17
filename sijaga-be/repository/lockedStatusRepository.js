@@ -19,7 +19,7 @@ const deleteLockedStatusesOlderThanOneDay = async () => {
 
     const deletedStatuses = await prisma.lockedStatus.deleteMany({
       where: {
-        timestamp: {
+        Timestamp: {
           lt: oneDayAgo, // Find records older than 1 day
         },
       },

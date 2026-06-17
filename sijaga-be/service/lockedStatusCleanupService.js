@@ -7,6 +7,8 @@ const cleanUpOldLockedStatuses = async () => {
     // Clean up the old statuses
     await deleteLockedStatusesOlderThanOneDay();
 
+    const io = getIo();
+    
     // Emit an event to notify all clients that the cleanup is done
     io.emit("status_cleanup", "Old locked statuses have been deleted");
 

@@ -9,6 +9,8 @@ const {
   getLatestLockedStatusService
 } = require("../service/usageHistoryService");
 
+const { processLockerAccess } = require("../repository/usageHistoryRepository");
+
 // Controller to get all users
 const getAllUsersController = async (req, res) => {
   try {
@@ -122,6 +124,27 @@ const getLatestLockedStatusController = async (req, res) => {
   }
 };
 
+const processLockerAccessController = async (req, res) => {
+
+  try {
+
+    const { card_id } = req.body;
+
+    const result = await processLockerAccess(card_id);
+
+    res.status(200).json(result);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+};
 
 module.exports = {
   getAllUsersController,
@@ -131,5 +154,6 @@ module.exports = {
   getTop3NamesController,
   getTop3TimestampsController,
   createLockedStatusController,
-  getLatestLockedStatusController
+  getLatestLockedStatusController,
+  processLockerAccessController
 };

@@ -131,24 +131,24 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
   };
 
   const fetchCardId = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  try {
+    const response = await axios.get(CARD_API_URL);
 
-      const response = await axios.get(CARD_API_URL);
-      const cardIdFromApi = response?.data?.data?.card_id;
-      if (cardIdFromApi) {
-        setCardId(cardIdFromApi);
-      } else {
-        setError("Card ID tidak ditemukan dalam respons API.");
-      }
-    } catch (err) {
-      console.error("Error fetching Card ID:", err);
-      setError("Gagal mengambil Card ID");
-    } finally {
-      setLoading(false);
+    console.log("FULL RESPONSE:", response.data);
+
+    const cardIdFromApi = response?.data?.data?.card_id;
+
+    console.log("CARD ID:", cardIdFromApi);
+
+    if (cardIdFromApi) {
+      setCardId(cardIdFromApi);
+    } else {
+      setError("Card ID tidak ditemukan dalam respons API.");
     }
-  };
+  } catch (err) {
+    console.error("Error fetching Card ID:", err);
+  }
+};
 
   useEffect(() => {
     fetchCardId();
