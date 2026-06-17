@@ -27,6 +27,9 @@ const createCardIdDumpController = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("FULL ERROR:");
+    console.error(error);
+
     res.status(400).json({
       status: false,
       message: error.message,

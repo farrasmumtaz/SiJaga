@@ -86,7 +86,7 @@ const loginUserService = async (email, password) => {
   // Return user details first, then token
   return {
     success: true,
-    message: "Login successful",
+    message: "OPEN",
     user: {
       id: user.id,
       name: user.name,

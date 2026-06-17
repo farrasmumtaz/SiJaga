@@ -1,5 +1,9 @@
 const { getUserDetailsService, updateUserProfileService, changePasswordService, deleteUserService } = require("../service/userService");
-
+const {
+  getPendingUsersService,
+  approveUserService,
+  rejectUserService,
+} = require("../service/userService");
 // Get user details (Who am I API)
 const whoamiController = async (req, res) => {
   try {
@@ -96,11 +100,81 @@ const deleteUserController = async (req, res) => {
   }
 };
 
+const getPendingUsersController = async (
+  req,
+  res
+) => {
+  try {
+    const users =
+      await getPendingUsersService();
+
+    res.json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const approveUserController = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const user =
+      await approveUserService(id);
+
+    res.json({
+      success: true,
+      message:
+        "User approved successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const rejectUserController = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const user =
+      await rejectUserService(id);
+
+    res.json({
+      success: true,
+      message:
+        "User rejected successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 module.exports = {
   whoamiController,
   getUserDetailsController,
   updateUserProfileController,
   changePasswordController,
-  deleteUserController
+  deleteUserController,
+  getPendingUsersController,
+  approveUserController,
+  rejectUserController,
 };

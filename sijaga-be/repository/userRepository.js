@@ -59,10 +59,45 @@ const deleteUser = async (userId) => {
   }
 };
 
+const getPendingUsers = async () => {
+  return await prisma.user.findMany({
+    where: {
+      status: "PENDING",
+    },
+    orderBy: {
+      id: "desc",
+    },
+  });
+};
+
+const approveUser = async (id) => {
+  return await prisma.user.update({
+    where: {
+      id: Number(id),
+    },
+    data: {
+      status: "APPROVED",
+    },
+  });
+};
+
+const rejectUser = async (id) => {
+  return await prisma.user.update({
+    where: {
+      id: Number(id),
+    },
+    data: {
+      status: "REJECTED",
+    },
+  });
+};
 
 module.exports = {
   getUserById,
   updateUserProfile,
   changeUserPassword,
-  deleteUser
+  deleteUser,
+  getPendingUsers,
+  approveUser,
+  rejectUser
 };
