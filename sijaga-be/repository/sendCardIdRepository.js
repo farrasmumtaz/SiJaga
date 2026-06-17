@@ -4,19 +4,27 @@ const prisma = new PrismaClient();
 // Function to create a new CardIdDump
 const createCardIdDump = async (cardId) => {
   try {
-    const cardIdDump = await prisma.cardIdDumps.create({
-      data: { card_id: cardId },
+    console.log("RFID CARD ID:", cardId);
+
+    const cardIdDump = await prisma.CardIdDumps.create({
+      data: {
+        card_id: cardId,
+      },
     });
+
     return cardIdDump;
   } catch (error) {
-    throw new Error("Error creating CardIdDump: " + error.message);
+    throw new Error(
+      "Error creating CardIdDump: " +
+      error.message
+    );
   }
 };
 
 // Function to fetch the latest CardIdDump
 const getLatestCardIdDump = async () => {
   try {
-    const latest = await prisma.cardIdDumps.findFirst({
+    const latest = await prisma.CardIdDumps.findFirst({
       orderBy: { id: "desc" },
     });
     return latest;
