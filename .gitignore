@@ -3,3 +3,14 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+node_modules/
+.env
+dist/
+build/
+coverage/
+
+.vscode/
+.idea/
+
+Thumbs.db
+.DS_Store

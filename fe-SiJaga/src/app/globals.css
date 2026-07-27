@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #EEEE; 
+  --foreground: 222.2 84% 4.9%
+}
+
+
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif; 
+}
+
+
+.text-blue{
+  color: #3650A2
+}
+
+/* CSS untuk animasi zoom-out */
+@keyframes zoomOut {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.5); /* Zoom-out ke 50% */
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Class untuk animasi zoom-out */
+.zoom-out {
+  animation: zoomOut 5s ease-in-out;
+
+}
+
+@keyframes zoomOutRotate {
+  0% {
+    transform: scale(1) rotate(0deg); /* Gambar dalam ukuran asli dan tidak berputar */
+  }
+  50% {
+    transform: scale(0.5) rotate(180deg); /* Zoom out ke ukuran setengah dan rotasi 180 derajat */
+  }
+  100% {
+    transform: scale(1) rotate(360deg); /* Kembali ke ukuran normal dan rotasi penuh */
+  }
+}
+.zoom-out-rotate {
+  animation: zoomOutRotate 5s ease-in-out forwards;
+}
+
+@keyframes zoomInOutRotate {
+  0% {
+    transform: scale(0.5) rotate(0deg); /* Mulai dari ukuran setengah dan tidak berputar */
+  }
+  50% {
+    transform: scale(1.5) rotate(180deg); /* Zoom in dan rotasi setengah putaran */
+  }
+  100% {
+    transform: scale(1) rotate(360deg); /* Kembali ke ukuran normal dan rotasi penuh */
+  }
+}
+
+.animate-zoom-in-out-rotate {
+  animation: zoomInOutRotate 5s ease-in-out infinite; /* Infinite untuk animasi berulang */
+}

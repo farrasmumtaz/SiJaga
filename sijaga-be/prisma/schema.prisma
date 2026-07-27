@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  status   String? @default("PENDING")
+  card_id  String  @unique
+
+  @@map("users")
+}
+
+model UsageHistory {
+  id        Int      @id @default(autoincrement())
+  Timestamp DateTime @default(now())
+  name      String
+  status    String
+  card_id   String
+
+  @@map("usage_history")
+}
+
+model CardIdDumps {
+  id      Int    @id @default(autoincrement())
+  card_id String @unique
+
+  @@map("card_id_dumps")
+}
+
+model BlacklistedToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("blacklisted_tokens")
+}
+
+model LockedStatus {
+  id        Int      @id @default(autoincrement())
+  status    String
+  Timestamp DateTime @default(now())
+
+  @@map("locked_status")
+}
