@@ -1,6 +1,8 @@
-const { PrismaClient } = require("@prisma/client");
+const { Prisma, PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { getIo } = require("../socket"); // Assuming io is initialized in app.js
+const { decideLockerAccess } = require("../domain/lockerAccess");
+const { retryTransaction } = require("../utils/transaction");
 
 // Get all users
 const getAllUsers = async () => {
@@ -75,67 +77,80 @@ const createLockedStatus = async (status) => {
 // Get the latest status from locked_status table
 const getLatestLockedStatus = async () => {
   return await prisma.lockedStatus.findFirst({
-    orderBy: {
-      Timestamp: "desc",
-    },
+    orderBy: [
+      { Timestamp: "desc" },
+      { id: "desc" },
+    ],
   });
 };
 
 const processLockerAccess = async (card_id) => {
-  const user =
-    await prisma.user.findUnique({
+  const transactionResult = await retryTransaction(() =>
+    prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.findUnique({
       where: {
-        card_id
+          card_id,
+        },
+      });
+
+      if (!user) {
+        return {
+          response: {
+            success: false,
+            action: "DENIED",
+            message: "Card not registered",
+          },
+          lockedStatus: null,
+          usageHistory: null,
+        };
       }
-    });
 
-  if (!user) {
-    return {
-      success: false,
-      action: "DENIED",
-      message: "Card not registered"
-    };
+      const latestStatus = await transaction.lockedStatus.findFirst({
+        orderBy: [
+          { Timestamp: "desc" },
+          { id: "desc" },
+        ],
+      });
+      const decision = decideLockerAccess(latestStatus?.status, card_id);
+
+      const lockedStatus = decision.nextLockerStatus
+        ? await transaction.lockedStatus.create({
+            data: {
+              status: decision.nextLockerStatus,
+            },
+          })
+        : null;
+
+      const usageHistory = await transaction.usageHistory.create({
+        data: {
+          Timestamp: new Date(),
+          name: user.name,
+          status: decision.historyStatus,
+          card_id,
+        },
+      });
+
+      return {
+        response: decision.response,
+        lockedStatus,
+        usageHistory,
+      };
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    })
+  );
+
+  const io = getIo();
+
+  if (transactionResult.lockedStatus) {
+    io.emit("lockedStatus_update", transactionResult.lockedStatus);
   }
-  const latestStatus = await getLatestLockedStatus();
 
-  // kalau belum ada status
-  if (!latestStatus || latestStatus.status === "UNLOCKED") {
-
-    // owner baru
-    await createLockedStatus(`LOCKED_${card_id}`);
-
-    await addUsageHistory(card_id, "STORE_ITEM");
-
-    return {
-      success: true,
-      action: "OPEN",
-      message: "Locker opened for storing item"
-    };
+  if (transactionResult.usageHistory) {
+    io.emit("usageHistory_update", transactionResult.usageHistory);
   }
 
-  // cek owner
-  if (latestStatus.status === `LOCKED_${card_id}`) {
-
-    // owner ambil barang
-    await createLockedStatus("UNLOCKED");
-
-    await addUsageHistory(card_id, "TAKE_ITEM");
-
-    return {
-      success: true,
-      action: "OPEN",
-      message: "Locker opened for owner"
-    };
-  }
-
-  // bukan owner
-  await addUsageHistory(card_id, "ACCESS_DENIED");
-
-  return {
-    success: false,
-    action: "DENIED",
-    message: "Access denied"
-  };
+  return transactionResult.response;
 };
 
 module.exports = {
