@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const {
   addUsageHistory
 } = require("../repository/usageHistoryRepository");
+const { sanitizeUser } = require("../utils/userResponse");
 
 // Register a new user
 const registerUserService = async (
@@ -50,12 +51,14 @@ const registerUserService = async (
   const hashedPassword =
     await bcrypt.hash(password, 10);
 
-  return await registerUser(
+  const user = await registerUser(
     name,
     email,
     cardId,
     hashedPassword
   );
+
+  return sanitizeUser(user);
 };  
 // Login user
 const loginUserService = async (email, password) => {

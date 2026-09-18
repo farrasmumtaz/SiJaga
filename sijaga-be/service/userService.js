@@ -5,19 +5,20 @@ const {
   approveUser,
   rejectUser,
 } = require("../repository/userRepository");
+const { sanitizeUser, sanitizeUsers } = require("../utils/userResponse");
 // Get user details
 const getUserDetailsService = async (userId) => {
   const user = await getUserById(userId);
   if (!user) {
     throw new Error("User not found.");
   }
-  return user;
+  return sanitizeUser(user);
 };
 
 // Update user profile
 const updateUserProfileService = async (userId, name, email, status, cardId) => {
   const updatedUser = await updateUserProfile(userId, name, email, status, cardId);
-  return updatedUser;
+  return sanitizeUser(updatedUser);
 };
 
 // Change password
@@ -37,7 +38,7 @@ const changePasswordService = async (userId, oldPassword, newPassword) => {
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   
   const updatedUser = await changeUserPassword(userId, hashedPassword);
-  return updatedUser;
+  return sanitizeUser(updatedUser);
 };
 
 const deleteUserService = async (userId) => {
@@ -46,17 +47,23 @@ const deleteUserService = async (userId) => {
 };
 
 const getPendingUsersService = async () => {
-  return await getPendingUsers();
+  const users = await getPendingUsers();
+
+  return sanitizeUsers(users);
 };
 
 const approveUserService = async (
   id
 ) => {
-  return await approveUser(id);
+  const user = await approveUser(id);
+
+  return sanitizeUser(user);
 };
 
 const rejectUserService = async (id) => {
-  return await rejectUser(id);
+  const user = await rejectUser(id);
+
+  return sanitizeUser(user);
 };
 
 module.exports = {

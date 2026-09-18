@@ -8,10 +8,13 @@ const {
     createLockedStatus,
     getLatestLockedStatus
   } = require("../repository/usageHistoryRepository");
+  const { sanitizeUsers } = require("../utils/userResponse");
   
   // Service to get all users
   const getAllUsersService = async () => {
-    return await getAllUsers();
+    const users = await getAllUsers();
+
+    return sanitizeUsers(users);
   };
   
   // Service to add usage history
@@ -59,4 +62,3 @@ const {
     createLockedStatusService,
     getLatestLockedStatusService,
   };
-  
