@@ -5,11 +5,19 @@ const {
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { getIo } = require("../socket");
+const { resolveCardId } = require("../utils/cardId");
 // Controller to create a CardIdDump
 
 const createCardIdDumpController = async (req, res) => {
   try {
-    const { cardId } = req.body;
+    const cardId = resolveCardId(req.body);
+
+    if (!cardId) {
+      return res.status(400).json({
+        status: false,
+        message: "Card ID is required.",
+      });
+    }
 
     const result = await createCardIdDumpService(cardId);
 

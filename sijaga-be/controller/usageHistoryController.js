@@ -10,6 +10,7 @@ const {
 } = require("../service/usageHistoryService");
 
 const { processLockerAccess } = require("../repository/usageHistoryRepository");
+const { resolveCardId } = require("../utils/cardId");
 
 // Controller to get all users
 const getAllUsersController = async (req, res) => {
@@ -125,24 +126,27 @@ const getLatestLockedStatusController = async (req, res) => {
 };
 
 const processLockerAccessController = async (req, res) => {
-
   try {
+    const cardId = resolveCardId(req.body);
 
-    const { card_id } = req.body;
+    if (!cardId) {
+      return res.status(400).json({
+        success: false,
+        action: "DENIED",
+        message: "Card ID is required.",
+      });
+    }
 
-    const result = await processLockerAccess(card_id);
+    const result = await processLockerAccess(cardId);
 
-    res.status(200).json(result);
-
+    return res.status(200).json(result);
   } catch (error) {
-
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message
     });
-
   }
 };
 
