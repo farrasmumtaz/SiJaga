@@ -103,6 +103,10 @@ const loginUserService = async (email, password) => {
 
 // Logout user
 const logoutUserService = async (token) => {
+  if (!token) {
+    throw new Error("Authorization token is required.");
+  }
+
   const tokenBlacklisted = await isTokenBlacklisted(token);
   if (tokenBlacklisted) {
     throw new Error("Token is already blacklisted.");

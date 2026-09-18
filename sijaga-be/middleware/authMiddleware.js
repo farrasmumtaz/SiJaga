@@ -1,33 +1,44 @@
 const jwt = require("jsonwebtoken");
+const { isTokenBlacklisted } = require("../repository/userAuthRepository");
 
-const authenticateUser = (req, res, next) => {
-  // Extract token from the Authorization header
-  const token = req.header("Authorization")?.split(" ")[1];
+const createAuthenticateUser = ({ verifyToken, isBlacklisted }) => {
+  return async (req, res, next) => {
+    const authorization = req.header("Authorization");
+    const [scheme, token] = authorization?.split(" ") ?? [];
 
-  // If no token is provided, return an error response
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Authorization token is required.",
-    });
-  }
+    if (scheme !== "Bearer" || !token) {
+      return res.status(401).json({
+        success: false,
+        message: "A valid Bearer token is required.",
+      });
+    }
 
-  try {
-    // Verify the token using the secret key
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+      const decoded = verifyToken(token);
+      const tokenIsBlacklisted = await isBlacklisted(token);
 
-    // Attach the decoded user data to the request object
-    req.user = decoded;
+      if (tokenIsBlacklisted) {
+        return res.status(401).json({
+          success: false,
+          message: "Token has been revoked.",
+        });
+      }
 
-    // Proceed to the next middleware or route handler
-    next();
-  } catch (error) {
-    // If the token is invalid or expired, return an error response
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired token.",
-    });
-  }
+      req.user = decoded;
+      req.authToken = token;
+      return next();
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired token.",
+      });
+    }
+  };
 };
 
-module.exports = { authenticateUser };
+const authenticateUser = createAuthenticateUser({
+  verifyToken: (token) => jwt.verify(token, process.env.JWT_SECRET),
+  isBlacklisted: isTokenBlacklisted,
+});
+
+module.exports = { authenticateUser, createAuthenticateUser };

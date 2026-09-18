@@ -51,7 +51,7 @@ const loginUserController = async (req, res) => {
 
 // Logout user
 const logoutUserController = async (req, res) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+  const token = req.authToken;
 
   try {
     await logoutUserService(token);
