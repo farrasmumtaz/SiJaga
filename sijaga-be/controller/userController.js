@@ -29,9 +29,11 @@ const getUserDetailsController = async (req, res) => {
   try {
     const userId = req.params.id;
     const user = await getUserDetailsService(userId);
+
     return res.json({
-      status: true,
-      data: latestStatus,
+      success: true,
+      message: "User details retrieved successfully.",
+      user,
     });
   } catch (error) {
     return res.status(400).json({
@@ -44,11 +46,9 @@ const getUserDetailsController = async (req, res) => {
 // Update user profile
 const updateUserProfileController = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming userId comes from the authenticated user
-    const { name, email, cardId } = req.body; // Destructuring from the request body
+    const userId = req.user.id;
 
-    // Pass individual parameters to the service function
-    const updatedUser = await updateUserProfileService(userId, name, email, cardId);
+    const updatedUser = await updateUserProfileService(userId, req.body);
 
     return res.json({
       success: true,

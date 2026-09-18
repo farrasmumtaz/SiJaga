@@ -9,21 +9,13 @@ const getUserById = async (userId) => {
 };
 
 // Update user profile
-const updateUserProfile = async (userId, name, email, status, card_id) => {
+const updateUserProfile = async (userId, profile) => {
   try {
-    console.log("Updating user with values:", { userId, name, email, status, card_id });
-
-    // Perform the update query
     const updatedUser = await prisma.user.update({
       where: {
         id: userId
       },
-      data: {
-        name: name,        // Update name field
-        email: email,      // Update email field
-        status: status,   // Set status to "pending" after update
-        card_id: card_id  // Update card_id field
-      }
+      data: profile,
     });
 
     return updatedUser;
@@ -73,7 +65,7 @@ const getPendingUsers = async () => {
 const approveUser = async (id) => {
   return await prisma.user.update({
     where: {
-      id: Number(id),
+      id,
     },
     data: {
       status: "APPROVED",
@@ -84,7 +76,7 @@ const approveUser = async (id) => {
 const rejectUser = async (id) => {
   return await prisma.user.update({
     where: {
-      id: Number(id),
+      id,
     },
     data: {
       status: "REJECTED",

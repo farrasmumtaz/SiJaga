@@ -8,8 +8,6 @@ const {
   getPendingUsersController,
   approveUserController,
   rejectUserController,
-  approveUserService,
-  rejectUserService,
 } = require("../controller/userController");
 const { authenticateUser } = require("../middleware/authMiddleware");
 

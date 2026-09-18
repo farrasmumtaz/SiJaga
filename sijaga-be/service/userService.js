@@ -6,24 +6,32 @@ const {
   rejectUser,
 } = require("../repository/userRepository");
 const { sanitizeUser, sanitizeUsers } = require("../utils/userResponse");
+const { normalizeProfileInput, normalizeUserId } = require("../utils/userInput");
 // Get user details
 const getUserDetailsService = async (userId) => {
-  const user = await getUserById(userId);
+  const normalizedUserId = normalizeUserId(userId);
+  const user = await getUserById(normalizedUserId);
+
   if (!user) {
     throw new Error("User not found.");
   }
+
   return sanitizeUser(user);
 };
 
 // Update user profile
-const updateUserProfileService = async (userId, name, email, status, cardId) => {
-  const updatedUser = await updateUserProfile(userId, name, email, status, cardId);
+const updateUserProfileService = async (userId, input) => {
+  const normalizedUserId = normalizeUserId(userId);
+  const profile = normalizeProfileInput(input);
+  const updatedUser = await updateUserProfile(normalizedUserId, profile);
+
   return sanitizeUser(updatedUser);
 };
 
 // Change password
 const changePasswordService = async (userId, oldPassword, newPassword) => {
-  const user = await getUserById(userId);
+  const normalizedUserId = normalizeUserId(userId);
+  const user = await getUserById(normalizedUserId);
   if (!user) {
     throw new Error("User not found.");
   }
@@ -37,12 +45,13 @@ const changePasswordService = async (userId, oldPassword, newPassword) => {
   // Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   
-  const updatedUser = await changeUserPassword(userId, hashedPassword);
+  const updatedUser = await changeUserPassword(normalizedUserId, hashedPassword);
   return sanitizeUser(updatedUser);
 };
 
 const deleteUserService = async (userId) => {
-  const result = await deleteUser(userId);
+  const normalizedUserId = normalizeUserId(userId);
+  const result = await deleteUser(normalizedUserId);
   return result;
 };
 
@@ -55,13 +64,15 @@ const getPendingUsersService = async () => {
 const approveUserService = async (
   id
 ) => {
-  const user = await approveUser(id);
+  const userId = normalizeUserId(id);
+  const user = await approveUser(userId);
 
   return sanitizeUser(user);
 };
 
 const rejectUserService = async (id) => {
-  const user = await rejectUser(id);
+  const userId = normalizeUserId(id);
+  const user = await rejectUser(userId);
 
   return sanitizeUser(user);
 };
