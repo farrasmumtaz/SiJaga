@@ -52,5 +52,6 @@ model LockedStatus {
   status    String
   Timestamp DateTime @default(now())
 
+  @@index([Timestamp(sort: Desc), id(sort: Desc)])
   @@map("locked_status")
 }

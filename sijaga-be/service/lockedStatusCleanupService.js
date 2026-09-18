@@ -4,17 +4,24 @@ const { deleteLockedStatusesOlderThanOneDay } = require("../repository/lockedSta
 // Function to clean up old locked statuses and emit an event to notify clients
 const cleanUpOldLockedStatuses = async () => {
   try {
-    // Clean up the old statuses
-    await deleteLockedStatusesOlderThanOneDay();
+    const result = await deleteLockedStatusesOlderThanOneDay();
 
-    const io = getIo();
-    
-    // Emit an event to notify all clients that the cleanup is done
-    io.emit("status_cleanup", "Old locked statuses have been deleted");
+    if (result.count > 0) {
+      const io = getIo();
+      io.emit("status_cleanup", {
+        deletedCount: result.count,
+        preservedStatusId: result.preservedStatusId,
+      });
+    }
 
-    console.log("Old locked statuses deleted successfully");
+    console.log(
+      `Deleted ${result.count} old locker statuses; preserved status ${result.preservedStatusId ?? "none"}.`
+    );
+
+    return result;
   } catch (error) {
     console.error("Error in cleanup service:", error);
+    throw error;
   }
 };
 

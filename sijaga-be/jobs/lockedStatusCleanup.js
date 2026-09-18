@@ -4,7 +4,12 @@ const { cleanUpOldLockedStatuses } = require("../service/lockedStatusCleanupServ
 // Schedule the cleanup job to run once a day (midnight)
 cron.schedule("0 0 * * *", async () => {
   console.log("Running locked status cleanup job...");
-  await cleanUpOldLockedStatuses();
+
+  try {
+    await cleanUpOldLockedStatuses();
+  } catch (error) {
+    console.error("Locked status cleanup job failed:", error);
+  }
 }, {
   timezone: "Asia/Jakarta" // Use your desired timezone
 });

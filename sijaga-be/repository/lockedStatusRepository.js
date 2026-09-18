@@ -1,34 +1,44 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// Function to delete locked statuses older than 1 day
-const deleteLockedStatusesOlderThanOneDay = async () => {
-  try {
-    // Count the number of records in the locked_status table
-    const totalRecords = await prisma.lockedStatus.count();
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-    // If there's only 1 record left, don't delete it
-    if (totalRecords <= 1) {
-      console.log("Only one record left, skipping deletion.");
-      return;
-    }
+// Keep the newest row because it is the current single-locker state.
+const deleteLockedStatusesOlderThanOneDay = async ({
+  client = prisma,
+  now = new Date(),
+} = {}) => {
+  const latestStatus = await client.lockedStatus.findFirst({
+    select: { id: true },
+    orderBy: [
+      { Timestamp: "desc" },
+      { id: "desc" },
+    ],
+  });
 
-    // Delete records older than 1 day
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1); // Set the threshold to 1 day ago
-
-    const deletedStatuses = await prisma.lockedStatus.deleteMany({
-      where: {
-        Timestamp: {
-          lt: oneDayAgo, // Find records older than 1 day
-        },
-      },
-    });
-
-    console.log(`Deleted ${deletedStatuses.count} locked status records older than 1 day.`);
-  } catch (error) {
-    console.error("Error during locked status cleanup:", error);
+  if (!latestStatus) {
+    return {
+      count: 0,
+      preservedStatusId: null,
+    };
   }
+
+  const cutoff = new Date(now.getTime() - ONE_DAY_MS);
+  const deletedStatuses = await client.lockedStatus.deleteMany({
+    where: {
+      id: {
+        not: latestStatus.id,
+      },
+      Timestamp: {
+        lt: cutoff,
+      },
+    },
+  });
+
+  return {
+    count: deletedStatuses.count,
+    preservedStatusId: latestStatus.id,
+  };
 };
 
 module.exports = {
