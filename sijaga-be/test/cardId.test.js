@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { resolveCardId } = require("../utils/cardId");
+const { resolveCardId, resolveCardScanId } = require("../utils/cardId");
 
 test("resolveCardId accepts the ESP32 cardId payload", () => {
   assert.equal(resolveCardId({ cardId: " a1b2c3d4 " }), "A1B2C3D4");
@@ -15,4 +15,15 @@ test("resolveCardId rejects missing, blank, and non-string values", () => {
   assert.equal(resolveCardId({}), null);
   assert.equal(resolveCardId({ cardId: "   " }), null);
   assert.equal(resolveCardId({ card_id: 1234 }), null);
+});
+
+test("resolveCardScanId accepts both API field styles", () => {
+  assert.equal(resolveCardScanId({ card_scan_id: 12 }), 12);
+  assert.equal(resolveCardScanId({ cardScanId: "13" }), 13);
+});
+
+test("resolveCardScanId rejects invalid scan IDs", () => {
+  assert.equal(resolveCardScanId({}), null);
+  assert.equal(resolveCardScanId({ card_scan_id: 0 }), null);
+  assert.equal(resolveCardScanId({ card_scan_id: "invalid" }), null);
 });

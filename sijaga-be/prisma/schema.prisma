@@ -29,9 +29,13 @@ model UsageHistory {
 }
 
 model CardIdDumps {
-  id      Int    @id @default(autoincrement())
-  card_id String @unique
+  id         Int       @id @default(autoincrement())
+  card_id    String
+  createdAt  DateTime  @default(now()) @map("created_at")
+  consumedAt DateTime? @map("consumed_at")
 
+  @@index([createdAt(sort: Desc)])
+  @@index([card_id, createdAt(sort: Desc)])
   @@map("card_id_dumps")
 }
 

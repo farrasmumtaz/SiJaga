@@ -24,9 +24,7 @@ const createCardIdDumpController = async (req, res) => {
     // SOCKET EMIT
     const io = getIo();
 
-    io.emit("cardIdDump_latest", {
-      card_id: cardId
-    });
+    io.emit("cardIdDump_latest", result);
 
     res.status(201).json({
       status: true,

@@ -6,17 +6,8 @@ const {
 
 // Register user
 const registerUserController = async (req, res) => {
-  const { name, email, password, status, card_id } = req.body;
-
-  if (!card_id) {
-    return res.status(400).json({
-      success: false,
-      message: "Card ID is required.",
-    });
-  }
-
   try {
-    const user = await registerUserService(name, email, card_id, password);
+    const user = await registerUserService(req.body);
     res.status(201).json({
       success: true,
       message: "User registered successfully.",

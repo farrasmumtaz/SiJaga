@@ -1,8 +1,6 @@
 const {
-  isCardIdAvailable,
-  registerUser,
+  registerUserFromScan,
   getUserByEmail,
-  getUserByCardId,
   blacklistToken,
   isTokenBlacklisted,
 } = require("../repository/userAuthRepository");
@@ -12,51 +10,42 @@ const {
   addUsageHistory
 } = require("../repository/usageHistoryRepository");
 const { sanitizeUser } = require("../utils/userResponse");
+const { resolveCardId, resolveCardScanId } = require("../utils/cardId");
 
 // Register a new user
-const registerUserService = async (
-  name,
-  email,
-  cardId,
-  password
-) => {
+const registerUserService = async (input) => {
+  const name = typeof input?.name === "string" ? input.name.trim() : "";
+  const email = typeof input?.email === "string" ? input.email.trim().toLowerCase() : "";
+  const password = input?.password;
+  const cardId = resolveCardId(input);
+  const scanId = resolveCardScanId(input);
 
-  const cardAvailable =
-    await isCardIdAvailable(cardId);
-
-  if (!cardAvailable) {
-    throw new Error(
-      "The card ID is not available in the database."
-    );
+  if (name.length < 2) {
+    throw new Error("Name must contain at least 2 characters.");
   }
 
-  const existingUser =
-    await getUserByEmail(email);
-
-  if (existingUser) {
-    throw new Error(
-      "Email already registered."
-    );
+  if (!email || !email.includes("@")) {
+    throw new Error("A valid email is required.");
   }
 
-  const existingCard =
-    await getUserByCardId(cardId);
+  if (typeof password !== "string" || password.length < 8) {
+    throw new Error("Password must contain at least 8 characters.");
+  }
 
-  if (existingCard) {
-    throw new Error(
-      "Card sudah terdaftar."
-    );
+  if (!cardId || !scanId) {
+    throw new Error("A fresh card scan is required.");
   }
 
   const hashedPassword =
     await bcrypt.hash(password, 10);
 
-  const user = await registerUser(
+  const user = await registerUserFromScan({
+    scanId,
     name,
     email,
     cardId,
-    hashedPassword
-  );
+    hashedPassword,
+  });
 
   return sanitizeUser(user);
 };  

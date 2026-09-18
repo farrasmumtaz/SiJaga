@@ -11,18 +11,17 @@ interface SettingSectionProps {
 }
 
 interface CardIdResponse {
+  id: number;
   card_id: string;
+  createdAt: string;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-const CARD_API_URL = `${API_BASE_URL}/card-id/latest`;
 const REGISTER_API_URL = `${API_BASE_URL}/user/register`;
 
-const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegisterSuccess }) => {
+const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) => {
   const [zoomOut, setZoomOut] = useState(false);
-  const [currentImage, setCurrentImage] = useState<string>(
-    isRegistered ? "/scanimage-success.png" : "/scanimage.png"
-  );
+  const [currentImage, setCurrentImage] = useState<string>("/scanimage.png");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,6 +30,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cardId, setCardId] = useState<string | null>(null);
+  const [cardScanId, setCardScanId] = useState<number | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const [nameError, setNameError] = useState(false);
   const [emailError, setEmailError] = useState(false);
@@ -53,8 +53,11 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
     });
 
     socket.on("cardIdDump_latest", (data: CardIdResponse) => {
-      if (data?.card_id) {
+      if (Number.isInteger(data?.id) && data.id > 0 && data?.card_id) {
+        setCardScanId(data.id);
         setCardId(data.card_id);
+        setCurrentImage("/scanimage.png");
+        setError(null);
         console.log("Card ID:", data.card_id);
       } else {
         console.error("Data card-scanned tidak valid:", data);
@@ -80,6 +83,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
     setPassword("");
     setConfirm(false);
     setCardId(null);
+    setCardScanId(null);
 
     setTimeout(() => {
       setZoomOut(false);
@@ -91,8 +95,8 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!cardId) {
-      setError("Card ID tidak ditemukan. Harap coba lagi.");
+    if (!cardId || !cardScanId) {
+      setError("Pindai kartu baru setelah halaman ini dibuka.");
       return;
     }
 
@@ -110,7 +114,13 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
     setError(null);
 
     try {
-      const data = { name, email, card_id: cardId, password };
+      const data = {
+        name,
+        email,
+        card_id: cardId,
+        card_scan_id: cardScanId,
+        password,
+      };
       const response = await axios.post(REGISTER_API_URL, data);
 
       console.log("Response:", response.data);
@@ -129,30 +139,6 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
       setLoading(false);
     }
   };
-
-  const fetchCardId = async () => {
-  try {
-    const response = await axios.get(CARD_API_URL);
-
-    console.log("FULL RESPONSE:", response.data);
-
-    const cardIdFromApi = response?.data?.data?.card_id;
-
-    console.log("CARD ID:", cardIdFromApi);
-
-    if (cardIdFromApi) {
-      setCardId(cardIdFromApi);
-    } else {
-      setError("Card ID tidak ditemukan dalam respons API.");
-    }
-  } catch (err) {
-    console.error("Error fetching Card ID:", err);
-  }
-};
-
-  useEffect(() => {
-    fetchCardId();
-  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row w-full space-y-4 lg:space-y-6 lg:space-x-3 lg:mt-10">
@@ -200,7 +186,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
               <input
                 id="uid"
                 type="text"
-                value={loading ? 'Memuat Card ID...' : cardId || 'Card ID tidak tersedia'}
+                value={cardId || 'Menunggu pemindaian kartu baru'}
                 readOnly
                 className={`w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-gray-100 ${
                   loading ? 'text-gray-400 italic' : 'text-gray-700'
@@ -264,16 +250,11 @@ const SettingSection: React.FC<SettingSectionProps> = ({ isRegistered, onRegiste
             <button
               type="submit"
               className={`w-full bg-green-500 text-white p-2 rounded-md hover:bg-green-600 transition-all duration-300 ${
-                isRegistered ? 'opacity-50 cursor-not-allowed' : ''
+                loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
-              disabled={loading || isRegistered}
+              disabled={loading}
             >
-              {isRegistered ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></span>
-                  <span>Mendaftarkan...</span>
-                </div>
-              ) : loading ? (
+              {loading ? (
                 'Memproses...'
               ) : (
                 'Daftar'

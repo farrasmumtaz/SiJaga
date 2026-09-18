@@ -10,4 +10,15 @@ const resolveCardId = (body) => {
   return normalizedCardId || null;
 };
 
-module.exports = { resolveCardId };
+const resolveCardScanId = (body) => {
+  const value = body?.card_scan_id ?? body?.cardScanId;
+  const scanId = Number(value);
+
+  if (!Number.isSafeInteger(scanId) || scanId <= 0) {
+    return null;
+  }
+
+  return scanId;
+};
+
+module.exports = { resolveCardId, resolveCardScanId };
