@@ -6,7 +6,11 @@ const {
   rejectUser,
 } = require("../repository/userRepository");
 const { sanitizeUser, sanitizeUsers } = require("../utils/userResponse");
-const { normalizeProfileInput, normalizeUserId } = require("../utils/userInput");
+const {
+  normalizePasswordChange,
+  normalizeProfileInput,
+  normalizeUserId,
+} = require("../utils/userInput");
 // Get user details
 const getUserDetailsService = async (userId) => {
   const normalizedUserId = normalizeUserId(userId);
@@ -29,15 +33,16 @@ const updateUserProfileService = async (userId, input) => {
 };
 
 // Change password
-const changePasswordService = async (userId, oldPassword, newPassword) => {
+const changePasswordService = async (userId, input) => {
   const normalizedUserId = normalizeUserId(userId);
+  const { currentPassword, newPassword } = normalizePasswordChange(input);
   const user = await getUserById(normalizedUserId);
   if (!user) {
     throw new Error("User not found.");
   }
 
   // Compare old password with the stored one
-  const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
   if (!isPasswordValid) {
     throw new Error("Old password is incorrect.");
   }

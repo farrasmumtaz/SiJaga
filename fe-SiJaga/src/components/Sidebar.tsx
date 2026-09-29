@@ -9,6 +9,7 @@ import {
   FiClock,
   FiLogOut,
   FiMenu,
+  FiUser,
 } from "react-icons/fi";
 import Cookies from "js-cookie";
 
@@ -58,6 +59,7 @@ const Sidebar: React.FC = () => {
     { href: "/dashboard", label: "Beranda", icon: FiHome },
     { href: "/riwayat", label: "Riwayat", icon: FiClock },
     { href: "/setting", label: "Daftar", icon: FiEdit },
+    { href: "/profile", label: "Profil", icon: FiUser },
 
   ];
 

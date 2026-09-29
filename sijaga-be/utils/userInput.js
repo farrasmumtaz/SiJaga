@@ -52,7 +52,27 @@ const normalizeProfileInput = (body) => {
   return profile;
 };
 
+const normalizePasswordChange = (body) => {
+  const currentPassword = body?.currentPassword;
+  const newPassword = body?.newPassword;
+
+  if (typeof currentPassword !== "string" || currentPassword.length === 0) {
+    throw new Error("Current password is required.");
+  }
+
+  if (typeof newPassword !== "string" || newPassword.length < 8) {
+    throw new Error("New password must contain at least 8 characters.");
+  }
+
+  if (currentPassword === newPassword) {
+    throw new Error("New password must be different from the current password.");
+  }
+
+  return { currentPassword, newPassword };
+};
+
 module.exports = {
+  normalizePasswordChange,
   normalizeProfileInput,
   normalizeUserId,
 };

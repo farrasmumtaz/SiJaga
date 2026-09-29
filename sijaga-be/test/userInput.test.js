@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  normalizePasswordChange,
   normalizeProfileInput,
   normalizeUserId,
 } = require("../utils/userInput");
@@ -41,4 +42,31 @@ test("normalizeProfileInput rejects empty and invalid updates", () => {
   assert.throws(() => normalizeProfileInput({ name: " " }), /Name must/);
   assert.throws(() => normalizeProfileInput({ email: "invalid" }), /valid email/);
   assert.throws(() => normalizeProfileInput({ card_id: " " }), /valid Card ID/);
+});
+
+test("normalizePasswordChange validates password updates", () => {
+  assert.deepEqual(
+    normalizePasswordChange({
+      currentPassword: "password123",
+      newPassword: "new-password-123",
+    }),
+    {
+      currentPassword: "password123",
+      newPassword: "new-password-123",
+    }
+  );
+
+  assert.throws(() => normalizePasswordChange({}), /Current password/);
+  assert.throws(
+    () => normalizePasswordChange({ currentPassword: "old", newPassword: "short" }),
+    /at least 8/
+  );
+  assert.throws(
+    () =>
+      normalizePasswordChange({
+        currentPassword: "same-password",
+        newPassword: "same-password",
+      }),
+    /must be different/
+  );
 });

@@ -67,8 +67,7 @@ const updateUserProfileController = async (req, res) => {
 const changePasswordController = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { currentPassword, newPassword } = req.body;
-    const updatedUser = await changePasswordService(userId, currentPassword, newPassword);
+    const updatedUser = await changePasswordService(userId, req.body);
 
     return res.json({
       success: true,
