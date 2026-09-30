@@ -166,7 +166,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
               className="w-70 h-70 object-contain animate-zoom overflow-hidden"
             />
           </div>
-
+    
           <p className="text-center text-black mt-4 lg:translate-y-[80px]">
             Pindai kartu akses yang ingin didaftarkan pada box SiJaga
           </p>

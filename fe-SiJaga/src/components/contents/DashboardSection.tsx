@@ -15,6 +15,15 @@ interface UsageHistoryUpdate {
   card_id: string;
 }
 
+type AvailabilityStatus = "ADA BARANG" | "TIDAK ADA BARANG";
+
+interface LockedStatusUpdate {
+  status: string;
+}
+
+const getAvailabilityStatus = (status: string | null | undefined): AvailabilityStatus =>
+  status?.startsWith("LOCKED_") ? "ADA BARANG" : "TIDAK ADA BARANG";
+
 const DashboardSection = () => {
   const socketRef = useRef<Socket | null>(null);
   const [lastUser, setLastUser] = useState({
@@ -27,7 +36,9 @@ const DashboardSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profileName, setProfileName] = useState(""); // Default name
-  const [availableStatus, setAvailableStatus] = useState("");
+  const [availableStatus, setAvailableStatus] = useState<AvailabilityStatus>(
+    "TIDAK ADA BARANG"
+  );
 
   const fetchUserProfile = async () => {
     const token = Cookies.get("token");
@@ -100,11 +111,17 @@ const DashboardSection = () => {
         console.error("Data yang diterima dari usageHistory_update tidak valid.");
       }
     });
+
+    // Status ini berasal dari API IoT/backend; web hanya menampilkan kondisinya.
+    socket.on("lockedStatus_update", (data: LockedStatusUpdate) => {
+      setAvailableStatus(getAvailabilityStatus(data?.status));
+    });
   
     // Cleanup function saat komponen di-unmount
     return () => {
       if (socketRef.current) {
         socket.off("usageHistory_update");
+        socket.off("lockedStatus_update");
         socket.disconnect();
         console.log("Socket disconnected.");
       }
@@ -195,11 +212,7 @@ const DashboardSection = () => {
   
       const responseData = await response.json();
       console.log("Availability response:", responseData);
-      if (responseData.status?.status?.startsWith("LOCKED_")) {
-        setAvailableStatus("ADA BARANG");
-      } else {
-        setAvailableStatus("TIDAK ADA BARANG");
-      }
+      setAvailableStatus(getAvailabilityStatus(responseData.status?.status));
     } catch (error) {
       console.error("Error fetching availability data:", error);
       setError("Gagal memuat data ketersediaan terbaru.");
@@ -325,7 +338,9 @@ const DashboardSection = () => {
               {/* Card 3: Kondisi SiJaga */}
               <div
                 className={`${
-                  lastUser.status === "BUKA" || lastUser.status === "buka" || lastUser.status === "Buka"? "bg-[#59DFB5]" : "bg-[#FF4B69]"
+                  availableStatus === "ADA BARANG"
+                    ? "bg-[#FF4B69]"
+                    : "bg-[#59DFB5]"
                 } text-white rounded-3xl p-4 shadow-lg flex items-center space-x-4`}
               >
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center">
@@ -344,7 +359,9 @@ const DashboardSection = () => {
                   <p className="text-lg md:text-2xl font-bold">
                     {loading
                       ? "Memuat..."
-                      : (lastUser.status || "Tidak tersedia").toUpperCase()}
+                      : availableStatus === "ADA BARANG"
+                      ? "LOCKED"
+                      : "UNLOCKED"}
                   </p>
                 </div>
               </div>
