@@ -5,11 +5,11 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
-const int lock = 1;
-const int buzzer = 2;
-const int led_strip = 3;
-const int LED_R = 4;
-const int button = 5;
+const int lock = 1;       // GPIO 1 (Solenoid) - SESUAI WIRING YANG SUDAH DIRAKIT
+const int buzzer = 2;     // GPIO 2 (Buzzer) - SESUAI WIRING YANG SUDAH DIRAKIT
+const int led_strip = 3;  // GPIO 3 (Relay LED Strip)
+const int LED_R = 4;      // GPIO 4 (LED Indikator Merah)
+const int button = 5;     // GPIO 5 (Tombol Refresh)
 
 #define TRIG_PIN 6
 #define ECHO_PIN 7
@@ -24,12 +24,12 @@ bool refresh = false;
 String tap = "KUNCI";
 
 // Konfigurasi WiFi
-const char *ssid = "CPS LAB";
-const char *password = "CPSLaboratory";
+const char *ssid = "Fiercelooo";
+const char *password = "10012009";
 
 String API_URL = "https://gewhvhqlzyqcqjqbfonr.supabase.co/rest/v1/";
 String API_KEY = "sb_publishable_2_doS0Q8qbFFf8KqG8AFmg_adKkllCA";
-String BACKEND_URL = "http://192.168.0.206:3000";
+String BACKEND_URL = "http://10.146.95.125:3000";
 
 String TableUsers = "users";
 String TableLogs = "usage_history";
