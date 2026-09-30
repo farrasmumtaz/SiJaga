@@ -6,7 +6,6 @@ const {
   getLatestUsageHistoryController,
   getTop3NamesController,
   getTop3TimestampsController,
-  createLockedStatusController,
   getLatestLockedStatusController,
   processLockerAccessController,
 } = require("../controller/usageHistoryController");
@@ -19,7 +18,6 @@ router.get("/all", getAllUsageHistoryController); // Get all usage history
 router.get("/latest", getLatestUsageHistoryController); // Get the latest usage history
 router.get("/top3/names", getTop3NamesController); // Get top 3 names
 router.get("/top3/timestamps", getTop3TimestampsController); // Get top 3 timestamps
-router.post("/box-status", createLockedStatusController); // Route to post a new status
 router.get("/latest-box-status", getLatestLockedStatusController); // Route to get the latest status
 router.post("/scan-locker", processLockerAccessController); // Route to process locker access based on card_id and locker_id
 

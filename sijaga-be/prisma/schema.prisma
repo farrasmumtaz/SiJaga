@@ -55,3 +55,13 @@ model LockedStatus {
   @@index([Timestamp(sort: Desc), id(sort: Desc)])
   @@map("locked_status")
 }
+
+model BoxStatus {
+  id         Int      @id @default(autoincrement())
+  status     String
+  distanceCm Int?     @map("distance_cm")
+  Timestamp  DateTime @default(now())
+
+  @@index([Timestamp(sort: Desc), id(sort: Desc)])
+  @@map("box_status")
+}

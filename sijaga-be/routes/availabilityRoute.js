@@ -1,10 +1,12 @@
 const express = require("express");
 const {
-  getLatestLockedStatusController,
-} = require("../controller/usageHistoryController");
+  reportBoxStatusController,
+  getLatestBoxStatusController,
+} = require("../controller/boxStatusController");
 
 const router = express.Router();
 
-router.get("/get-latest", getLatestLockedStatusController);
+router.post("/report", reportBoxStatusController);
+router.get("/get-latest", getLatestBoxStatusController);
 
 module.exports = router;

@@ -29,7 +29,8 @@ const char *password = "10012009";
 
 String API_URL = "https://gewhvhqlzyqcqjqbfonr.supabase.co/rest/v1/";
 String API_KEY = "sb_publishable_2_doS0Q8qbFFf8KqG8AFmg_adKkllCA";
-String BACKEND_URL = "http://10.146.95.125:3000";
+// Sesuaikan jika alamat IPv4 laptop berubah saat berganti jaringan.
+String BACKEND_URL = "http://192.168.18.41:3000";
 
 String TableUsers = "users";
 String TableLogs = "usage_history";
@@ -37,6 +38,38 @@ WiFiClientSecure client;
 
 String uidString = "";
 String status_barang = "";
+String last_reported_status = "";
+unsigned long last_report_attempt_ms = 0;
+
+void reportBoxStatus(int distance_cm)
+{
+  if (status_barang == last_reported_status || millis() - last_report_attempt_ms < 5000)
+  {
+    return;
+  }
+
+  last_report_attempt_ms = millis();
+
+  HTTPClient http;
+  http.setTimeout(5000);
+  http.begin(BACKEND_URL + "/availability/report");
+  http.addHeader("Content-Type", "application/json");
+
+  String payload = "{\"status\":\"" + status_barang + "\",\"distance_cm\":" + String(distance_cm) + "}";
+  int httpCode = http.POST(payload);
+  String response = http.getString();
+
+  Serial.print("Box Status HTTP Code: ");
+  Serial.println(httpCode);
+  Serial.println("Box Status Response: " + response);
+
+  if (httpCode >= 200 && httpCode < 300)
+  {
+    last_reported_status = status_barang;
+  }
+
+  http.end();
+}
 
 void setup()
 {
@@ -89,7 +122,14 @@ void loop()
     delayMicroseconds(10);
     digitalWrite(TRIG_PIN, LOW);
 
-    long duration = pulseIn(ECHO_PIN, HIGH);
+    long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+    if (duration == 0)
+    {
+      Serial.println("Ultrasonic timeout");
+      delay(100);
+      return;
+    }
+
     int distance_cm = (duration / 2) / 29.1;
 
     if (distance_cm < 15)
@@ -102,6 +142,8 @@ void loop()
       digitalWrite(LED_R, LOW);
       status_barang = "TIDAK ADA BARANG";
     }
+
+    reportBoxStatus(distance_cm);
 
     // ================= LOGIKA BUTTON REFRESH =================
     if (digitalRead(button) == LOW)

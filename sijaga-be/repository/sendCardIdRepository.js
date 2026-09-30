@@ -6,7 +6,7 @@ const createCardIdDump = async (cardId) => {
   try {
     console.log("RFID CARD ID:", cardId);
 
-    const cardIdDump = await prisma.CardIdDumps.create({
+    const cardIdDump = await prisma.cardIdDumps.create({
       data: {
         card_id: cardId,
       },
@@ -22,9 +22,19 @@ const createCardIdDump = async (cardId) => {
 };
 
 // Function to fetch the latest CardIdDump
-const getLatestCardIdDump = async () => {
+const getLatestCardIdDump = async (createdAfter = null) => {
   try {
-    const latest = await prisma.CardIdDumps.findFirst({
+    const latest = await prisma.cardIdDumps.findFirst({
+      where: {
+        consumedAt: null,
+        ...(createdAfter
+          ? {
+              createdAt: {
+                gte: createdAfter,
+              },
+            }
+          : {}),
+      },
       orderBy: { id: "desc" },
     });
     return latest;
