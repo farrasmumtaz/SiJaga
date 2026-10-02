@@ -90,6 +90,7 @@ const DashboardSection = () => {
   useEffect(() => {
     console.log("API BASE URL:", API_BASE_URL);
     const socket = io(API_BASE_URL, {
+      auth: { token: Cookies.get("token") },
       transports: ["websocket", "polling"],
       withCredentials: true,
       reconnection: true,

@@ -73,3 +73,28 @@ test("authentication exposes verified identity and token to protected routes", a
   assert.equal(nextCalled, true);
   assert.equal(response.statusCode, null);
 });
+
+test("authorization reads current database role rather than trusting token role", async () => {
+  const middleware = createAuthenticateUser({
+    verifyToken: () => ({ id: 7, role: "ADMIN" }),
+    isBlacklisted: async () => false,
+    getUser: async () => ({ id: 7, role: "USER", status: "APPROVED" }),
+  });
+  const request = { header: () => "Bearer active-token" };
+  await middleware(request, createResponse(), () => {});
+  assert.equal(request.user.role, "USER");
+});
+
+test("deleted or rejected accounts cannot reuse existing tokens", async () => {
+  for (const user of [null, { id: 7, status: "REJECTED", role: "USER" }]) {
+    const middleware = createAuthenticateUser({
+      verifyToken: () => ({ id: 7 }),
+      isBlacklisted: async () => false,
+      getUser: async () => user,
+    });
+    const response = createResponse();
+    await middleware({ header: () => "Bearer active-token" }, response,
+      () => assert.fail("Rejected account must not proceed"));
+    assert.equal(response.statusCode, 401);
+  }
+});

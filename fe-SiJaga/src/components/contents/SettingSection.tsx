@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import axios from "axios";
+import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";
 
 interface SettingSectionProps {
@@ -52,6 +53,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
     };
 
     const socket = io(API_BASE_URL, {
+      auth: { token: Cookies.get("token") },
       transports: ["websocket", "polling"],
       withCredentials: true,
     });

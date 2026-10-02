@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 import { FiCheck, FiRefreshCw, FiX } from "react-icons/fi";
 import { jakarta } from "@/styles/fonts";
 
@@ -18,6 +19,7 @@ type Action = "approve" | "reject";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const ApprovalSection = () => {
+  const router = useRouter();
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionUserId, setActionUserId] = useState<number | null>(null);
@@ -39,6 +41,14 @@ const ApprovalSection = () => {
     setError(null);
 
     try {
+      const profileResponse = await fetch(`${API_BASE_URL}/user-ess/whoami`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const profile: { user?: { role?: string } } = await profileResponse.json();
+      if (!profileResponse.ok || profile.user?.role !== "ADMIN") {
+        router.replace("/dashboard");
+        return;
+      }
       const response = await fetch(`${API_BASE_URL}/user-ess/pending`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -59,7 +69,7 @@ const ApprovalSection = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     void loadPendingUsers();

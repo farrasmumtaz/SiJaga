@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   FiHome,
@@ -19,6 +19,20 @@ const Sidebar: React.FC = () => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token) return;
+    let active = true;
+    void fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user-ess/whoami`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(async (response) => {
+      const data: { user?: { role?: string } } = await response.json();
+      if (active) setIsAdmin(response.ok && data.user?.role === "ADMIN");
+    }).catch(() => { if (active) setIsAdmin(false); });
+    return () => { active = false; };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -63,7 +77,7 @@ const Sidebar: React.FC = () => {
     { href: "/approval", label: "Approval", icon: FiCheckSquare },
     { href: "/profile", label: "Profil", icon: FiUser },
 
-  ];
+  ].filter((item) => item.href !== "/approval" || isAdmin);
 
   return (
     <>

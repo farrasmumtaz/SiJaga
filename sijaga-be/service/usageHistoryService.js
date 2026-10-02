@@ -23,23 +23,23 @@ const {
   };
   
   // Service to get all usage history
-  const getAllUsageHistoryService = async () => {
-    return await getAllUsageHistory();
+  const getAllUsageHistoryService = async (user) => {
+    return await getAllUsageHistory(user);
   };
   
   // Service to get the latest usage history
-  const getLatestUsageHistoryService = async () => {
-    return await getLatestUsageHistory();
+  const getLatestUsageHistoryService = async (user) => {
+    return await getLatestUsageHistory(user);
   };
   
   // Service to get top 3 names from usage history
-  const getTop3NamesService = async () => {
-    return await getTop3NamesFromUsageHistory();
+  const getTop3NamesService = async (user) => {
+    return await getTop3NamesFromUsageHistory(user);
   };
   
   // Service to get top 3 timestamps from usage history
-  const getTop3TimestampsService = async () => {
-    return await getTop3TimestampsFromUsageHistory();
+  const getTop3TimestampsService = async (user) => {
+    return await getTop3TimestampsFromUsageHistory(user);
   };
 
   // Post a new status

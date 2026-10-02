@@ -122,6 +122,7 @@ const History = () => {
   // Set up WebSocket connection
   useEffect(() => {
     const socket = io(URL, {
+      auth: { token: Cookies.get("token") },
       transports: ["websocket", "polling"], // Prioritaskan websocket
       withCredentials: true,
     });

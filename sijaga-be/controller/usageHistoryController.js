@@ -36,7 +36,7 @@ const addUsageHistoryController = async (req, res) => {
 // Controller to get all usage history
 const getAllUsageHistoryController = async (req, res) => {
   try {
-    const usageHistory = await getAllUsageHistoryService();
+    const usageHistory = await getAllUsageHistoryService(req.user);
     res.json({ success: true, usageHistory });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -46,7 +46,7 @@ const getAllUsageHistoryController = async (req, res) => {
 // Controller to get the latest usage history
 const getLatestUsageHistoryController = async (req, res) => {
   try {
-    const latestUsageHistory = await getLatestUsageHistoryService();
+    const latestUsageHistory = await getLatestUsageHistoryService(req.user);
     res.json({ success: true, latestUsageHistory });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -56,7 +56,7 @@ const getLatestUsageHistoryController = async (req, res) => {
 // Controller to get top 3 names
 const getTop3NamesController = async (req, res) => {
   try {
-    const top3Names = await getTop3NamesService();
+    const top3Names = await getTop3NamesService(req.user);
     res.json({ success: true, top3Names });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -66,7 +66,7 @@ const getTop3NamesController = async (req, res) => {
 // Controller to get top 3 timestamps
 const getTop3TimestampsController = async (req, res) => {
   try {
-    const top3Timestamps = await getTop3TimestampsService();
+    const top3Timestamps = await getTop3TimestampsService(req.user);
     res.json({ success: true, top3Timestamps });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
