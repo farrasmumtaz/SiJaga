@@ -20,6 +20,7 @@ export const config = {
     "/dashboard",
     "/riwayat",
     "/setting",
+    "/approval",
     "/profile",
   ],
 };

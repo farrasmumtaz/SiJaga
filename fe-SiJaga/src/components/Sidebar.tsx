@@ -7,6 +7,7 @@ import {
   FiHome,
   FiEdit,
   FiClock,
+  FiCheckSquare,
   FiLogOut,
   FiMenu,
   FiUser,
@@ -59,6 +60,7 @@ const Sidebar: React.FC = () => {
     { href: "/dashboard", label: "Beranda", icon: FiHome },
     { href: "/riwayat", label: "Riwayat", icon: FiClock },
     { href: "/setting", label: "Daftar", icon: FiEdit },
+    { href: "/approval", label: "Approval", icon: FiCheckSquare },
     { href: "/profile", label: "Profil", icon: FiUser },
 
   ];
