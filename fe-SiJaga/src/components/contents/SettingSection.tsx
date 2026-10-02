@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import axios from "axios";
+import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";
 
 interface SettingSectionProps {
@@ -41,7 +42,18 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
       return;
     }
 
+    const pageOpenedAt = new Date().toISOString();
+    const applyCardScan = (data: CardIdResponse) => {
+      if (Number.isInteger(data?.id) && data.id > 0 && data?.card_id) {
+        setCardScanId(data.id);
+        setCardId(data.card_id);
+        setCurrentImage("/scanimage.png");
+        setError(null);
+      }
+    };
+
     const socket = io(API_BASE_URL, {
+      auth: { token: Cookies.get("token") },
       transports: ["websocket", "polling"],
       withCredentials: true,
     });
@@ -54,10 +66,7 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
 
     socket.on("cardIdDump_latest", (data: CardIdResponse) => {
       if (Number.isInteger(data?.id) && data.id > 0 && data?.card_id) {
-        setCardScanId(data.id);
-        setCardId(data.card_id);
-        setCurrentImage("/scanimage.png");
-        setError(null);
+        applyCardScan(data);
         console.log("Card ID:", data.card_id);
       } else {
         console.error("Data card-scanned tidak valid:", data);
@@ -68,7 +77,25 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
       console.error("WebSocket error:", err);
     });
 
+    const pollLatestScan = async () => {
+      try {
+        const response = await axios.get<{ data: CardIdResponse }>(
+          `${API_BASE_URL}/card-id/latest`,
+          { params: { createdAfter: pageOpenedAt } }
+        );
+        applyCardScan(response.data.data);
+      } catch (err) {
+        if (!axios.isAxiosError(err) || err.response?.status !== 404) {
+          console.error("Gagal memeriksa scan RFID terbaru:", err);
+        }
+      }
+    };
+
+    const pollingId = window.setInterval(pollLatestScan, 2000);
+    void pollLatestScan();
+
     return () => {
+      window.clearInterval(pollingId);
       socket.off("cardIdDump_latest");
       socket.disconnect();
     };

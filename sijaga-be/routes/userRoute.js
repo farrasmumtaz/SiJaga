@@ -10,6 +10,7 @@ const {
   rejectUserController,
 } = require("../controller/userController");
 const { authenticateUser } = require("../middleware/authMiddleware");
+const { requireAdmin } = require("../domain/authorization");
 
 const router = express.Router();
 
@@ -19,14 +20,14 @@ router.use(authenticateUser);
 // Route to get current user details (whoami)
 router.get("/whoami", whoamiController);
 
-router.get("/pending",getPendingUsersController);
+router.get("/pending", requireAdmin, getPendingUsersController);
 
-router.put("/approve/:id",approveUserController);
+router.put("/approve/:id", requireAdmin, approveUserController);
 
-router.put("/reject/:id",rejectUserController);
+router.put("/reject/:id", requireAdmin, rejectUserController);
 
 // Route to get user details by ID (for admin or profile-related)
-router.get("/:id", getUserDetailsController);
+router.get("/:id", requireAdmin, getUserDetailsController);
 
 // Route to update user profile
 router.put("/update", updateUserProfileController);

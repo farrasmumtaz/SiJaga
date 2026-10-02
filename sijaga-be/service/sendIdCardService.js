@@ -9,12 +9,7 @@ const createCardIdDumpService = async (cardId) => {
 };
 
 // Service to fetch the latest CardIdDump
-const getLatestCardIdDumpService = async () => {
-  const latest = await getLatestCardIdDump();
-  if (!latest) {
-    throw new Error("No CardIdDumps found.");
-  }
-  return latest;
-};
+const getLatestCardIdDumpService = async (createdAfter = null) =>
+  getLatestCardIdDump(createdAfter);
 
 module.exports = { createCardIdDumpService, getLatestCardIdDumpService };

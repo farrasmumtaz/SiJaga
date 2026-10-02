@@ -31,8 +31,6 @@ const io = socketIo(server, {
 setIo(io);
 const availabilityRoutes = require("./routes/availabilityRoute");
 
-console.log("availability loaded");
-console.log(availabilityRoutes);
 // Middleware
 app.use(
   cors({
@@ -46,6 +44,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/availability", availabilityRoutes);
 
 // Socket.IO
+const { authenticateSocketToken } = require("./middleware/authMiddleware");
+io.use(async (socket, next) => {
+  try {
+    await authenticateSocketToken(socket.handshake.auth?.token);
+    next();
+  } catch {
+    next(new Error("Authentication required."));
+  }
+});
 io.on("connection", (socket) => {
   console.log("A user connected");
 
@@ -55,9 +62,6 @@ io.on("connection", (socket) => {
 
   socket.emit("welcome", "Welcome to the real-time server!");
 
-  socket.on("status_update", (data) => {
-    io.emit("status_update", data);
-  });
 });
 
 // Routes
@@ -83,5 +87,4 @@ app.use((err, req, res, next) => {
     message: "Internal server error",
   });
 });
-console.log("availability mounted");
 module.exports = { app, server};

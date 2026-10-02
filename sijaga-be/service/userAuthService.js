@@ -84,6 +84,7 @@ const loginUserService = async (email, password) => {
       name: user.name,
       email: user.email,
       status: user.status,
+      role: user.role,
       cardId: user.card_id
     },
     token: token

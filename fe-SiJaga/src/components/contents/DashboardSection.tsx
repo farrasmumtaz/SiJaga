@@ -16,13 +16,22 @@ interface UsageHistoryUpdate {
 }
 
 type AvailabilityStatus = "ADA BARANG" | "TIDAK ADA BARANG";
+type LockerStatus = "LOCKED" | "UNLOCKED";
 
 interface LockedStatusUpdate {
   status: string;
 }
 
-const getAvailabilityStatus = (status: string | null | undefined): AvailabilityStatus =>
-  status?.startsWith("LOCKED_") ? "ADA BARANG" : "TIDAK ADA BARANG";
+interface BoxStatusUpdate {
+  status: AvailabilityStatus;
+  distanceCm?: number | null;
+}
+
+const getLockerStatus = (status: string | null | undefined): LockerStatus =>
+  status?.startsWith("LOCKED_") ? "LOCKED" : "UNLOCKED";
+
+const isAvailabilityStatus = (status: unknown): status is AvailabilityStatus =>
+  status === "ADA BARANG" || status === "TIDAK ADA BARANG";
 
 const DashboardSection = () => {
   const socketRef = useRef<Socket | null>(null);
@@ -36,9 +45,8 @@ const DashboardSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profileName, setProfileName] = useState(""); // Default name
-  const [availableStatus, setAvailableStatus] = useState<AvailabilityStatus>(
-    "TIDAK ADA BARANG"
-  );
+  const [availableStatus, setAvailableStatus] = useState<AvailabilityStatus | null>(null);
+  const [lockerStatus, setLockerStatus] = useState<LockerStatus>("UNLOCKED");
 
   const fetchUserProfile = async () => {
     const token = Cookies.get("token");
@@ -80,6 +88,7 @@ const DashboardSection = () => {
   useEffect(() => {
     console.log("API BASE URL:", API_BASE_URL);
     const socket = io(API_BASE_URL, {
+      auth: { token: Cookies.get("token") },
       transports: ["websocket", "polling"],
       withCredentials: true,
       reconnection: true,
@@ -92,6 +101,7 @@ const DashboardSection = () => {
     // Event handler ketika socket berhasil terhubung
     socket.on("connect", () => {
       console.log("Connected to Socket.io URL");
+      void fetchAvailable();
     });
   
     // Event handler untuk update history
@@ -112,9 +122,14 @@ const DashboardSection = () => {
       }
     });
 
-    // Status ini berasal dari API IoT/backend; web hanya menampilkan kondisinya.
     socket.on("lockedStatus_update", (data: LockedStatusUpdate) => {
-      setAvailableStatus(getAvailabilityStatus(data?.status));
+      setLockerStatus(getLockerStatus(data?.status));
+    });
+
+    socket.on("boxStatus_update", (data: BoxStatusUpdate) => {
+      if (isAvailabilityStatus(data?.status)) {
+        setAvailableStatus(data.status);
+      }
     });
   
     // Cleanup function saat komponen di-unmount
@@ -122,6 +137,7 @@ const DashboardSection = () => {
       if (socketRef.current) {
         socket.off("usageHistory_update");
         socket.off("lockedStatus_update");
+        socket.off("boxStatus_update");
         socket.disconnect();
         console.log("Socket disconnected.");
       }
@@ -212,7 +228,10 @@ const DashboardSection = () => {
   
       const responseData = await response.json();
       console.log("Availability response:", responseData);
-      setAvailableStatus(getAvailabilityStatus(responseData.status?.status));
+      const status = responseData.status?.status;
+      if (isAvailabilityStatus(status)) {
+        setAvailableStatus(status);
+      }
     } catch (error) {
       console.error("Error fetching availability data:", error);
       setError("Gagal memuat data ketersediaan terbaru.");
@@ -221,10 +240,29 @@ const DashboardSection = () => {
     }
   };
 
+  const fetchLockerStatus = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/history/latest-box-status`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gagal mengambil status kunci: ${response.status}`);
+      }
+
+      const responseData = await response.json();
+      setLockerStatus(getLockerStatus(responseData.status?.status));
+    } catch (error) {
+      console.error("Error fetching locker status:", error);
+      setError("Gagal memuat status kunci terbaru.");
+    }
+  };
+
  useEffect(() => {
   fetchUserProfile();
   fetchLastUser();
   fetchAvailable();
+  fetchLockerStatus();
 }, []);
 
   return (
@@ -323,14 +361,14 @@ const DashboardSection = () => {
                   </h2>
                   <p
                     className={`text-md md:text-2xl font-bold ${
-                      loading
+                      loading || availableStatus === null
                         ? "text-gray-300"
                         : availableStatus === "ADA BARANG"
                         ? "text-[#FF4B69]"
                         : "text-[#59DFB5]"
                     }`}
                   >
-                    {loading ? "Memuat..." : (availableStatus).toUpperCase() || "Tidak ditemukan"}
+                    {loading ? "Memuat..." : availableStatus ?? "Menunggu data sensor"}
                   </p>
                 </div>
               </div>
@@ -338,7 +376,7 @@ const DashboardSection = () => {
               {/* Card 3: Kondisi SiJaga */}
               <div
                 className={`${
-                  availableStatus === "ADA BARANG"
+                  lockerStatus === "LOCKED"
                     ? "bg-[#FF4B69]"
                     : "bg-[#59DFB5]"
                 } text-white rounded-3xl p-4 shadow-lg flex items-center space-x-4`}
@@ -359,9 +397,7 @@ const DashboardSection = () => {
                   <p className="text-lg md:text-2xl font-bold">
                     {loading
                       ? "Memuat..."
-                      : availableStatus === "ADA BARANG"
-                      ? "LOCKED"
-                      : "UNLOCKED"}
+                      : lockerStatus}
                   </p>
                 </div>
               </div>

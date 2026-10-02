@@ -8,24 +8,34 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
+  role     UserRole       @default(USER)
+  history  UsageHistory[]
+  id       Int            @id @default(autoincrement())
   name     String
-  email    String  @unique
+  email    String         @unique
   password String
-  status   String? @default("PENDING")
-  card_id  String  @unique
+  status   String?        @default("PENDING")
+  card_id  String         @unique
 
   @@map("users")
 }
 
 model UsageHistory {
+  userId    Int?     @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   id        Int      @id @default(autoincrement())
   Timestamp DateTime @default(now())
   name      String
   status    String
   card_id   String
 
+  @@index([userId, Timestamp(sort: Desc), id(sort: Desc)])
   @@map("usage_history")
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 model CardIdDumps {
@@ -54,4 +64,14 @@ model LockedStatus {
 
   @@index([Timestamp(sort: Desc), id(sort: Desc)])
   @@map("locked_status")
+}
+
+model BoxStatus {
+  id         Int      @id @default(autoincrement())
+  status     String
+  distanceCm Int?     @map("distance_cm")
+  Timestamp  DateTime @default(now())
+
+  @@index([Timestamp(sort: Desc), id(sort: Desc)])
+  @@map("box_status")
 }

@@ -3,6 +3,8 @@ const prisma = new PrismaClient();
 const { getIo } = require("../socket"); // Assuming io is initialized in app.js
 const { decideLockerAccess } = require("../domain/lockerAccess");
 const { retryTransaction } = require("../utils/transaction");
+const { historyScope } = require("../domain/authorization");
+const { emitHistory } = require("../socket");
 
 // Get all users
 const getAllUsers = async () => {
@@ -22,28 +24,30 @@ const addUsageHistory = async (card_id, status) => {
       name: user.name,
       status: status,
       card_id: card_id,
+      userId: user.id,
     },
   });
 
   // Emit real-time event for usage history
-  getIo().emit("usageHistory_update", usageHistory);
+  await emitHistory(usageHistory);
 
   return usageHistory;
 };
 
 // Get all usage history
-const getAllUsageHistory = async () => {
-  return await prisma.usageHistory.findMany({ orderBy: { Timestamp: "desc" } });
+const getAllUsageHistory = async (user) => {
+  return await prisma.usageHistory.findMany({ where: historyScope(user), orderBy: [{ Timestamp: "desc" }, { id: "desc" }] });
 };
 
 // Get the latest usage history entry
-const getLatestUsageHistory = async () => {
-  return await prisma.usageHistory.findFirst({ orderBy: { Timestamp: "desc" } });
+const getLatestUsageHistory = async (user) => {
+  return await prisma.usageHistory.findFirst({ where: historyScope(user), orderBy: [{ Timestamp: "desc" }, { id: "desc" }] });
 };
 
 // Get top 3 names from usage history
-const getTop3NamesFromUsageHistory = async () => {
+const getTop3NamesFromUsageHistory = async (user) => {
   return await prisma.usageHistory.findMany({
+    where: historyScope(user),
     select: { name: true },
     distinct: ["name"],
     take: 3,
@@ -52,8 +56,9 @@ const getTop3NamesFromUsageHistory = async () => {
 };
 
 // Get top 3 timestamps from usage history
-const getTop3TimestampsFromUsageHistory = async () => {
+const getTop3TimestampsFromUsageHistory = async (user) => {
   return await prisma.usageHistory.findMany({
+    where: historyScope(user),
     select: { Timestamp: true },
     take: 3,
     orderBy: { Timestamp: "desc" },
@@ -93,7 +98,7 @@ const processLockerAccess = async (card_id) => {
         },
       });
 
-      if (!user) {
+      if (!user || user.status !== "APPROVED") {
         return {
           response: {
             success: false,
@@ -127,6 +132,7 @@ const processLockerAccess = async (card_id) => {
           name: user.name,
           status: decision.historyStatus,
           card_id,
+          userId: user.id,
         },
       });
 
@@ -147,7 +153,7 @@ const processLockerAccess = async (card_id) => {
   }
 
   if (transactionResult.usageHistory) {
-    io.emit("usageHistory_update", transactionResult.usageHistory);
+    await emitHistory(transactionResult.usageHistory);
   }
 
   return transactionResult.response;

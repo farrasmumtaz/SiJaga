@@ -2,8 +2,6 @@ const {
   createCardIdDumpService,
   getLatestCardIdDumpService,
 } = require("../service/sendIdCardService");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
 const { getIo } = require("../socket");
 const { resolveCardId } = require("../utils/cardId");
 // Controller to create a CardIdDump
@@ -46,11 +44,17 @@ const createCardIdDumpController = async (req, res) => {
 // Controller to fetch the latest CardIdDump
 const getLatestCardIdDumpController = async (req, res) => {
   try {
-    const latestCard = await prisma.cardIdDumps.findFirst({
-      orderBy: {
-        id: "desc"
-      }
-    });
+    const createdAfter = req.query.createdAfter;
+    const parsedCreatedAfter = createdAfter ? new Date(createdAfter) : null;
+
+    if (parsedCreatedAfter && Number.isNaN(parsedCreatedAfter.getTime())) {
+      return res.status(400).json({
+        status: false,
+        message: "createdAfter must be a valid ISO date.",
+      });
+    }
+
+    const latestCard = await getLatestCardIdDumpService(parsedCreatedAfter);
 
     if (!latestCard) {
       return res.status(404).json({

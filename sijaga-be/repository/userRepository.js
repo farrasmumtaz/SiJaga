@@ -66,6 +66,8 @@ const approveUser = async (id) => {
   return await prisma.user.update({
     where: {
       id,
+      status: "PENDING",
+      role: "USER",
     },
     data: {
       status: "APPROVED",
@@ -77,6 +79,8 @@ const rejectUser = async (id) => {
   return await prisma.user.update({
     where: {
       id,
+      status: "PENDING",
+      role: "USER",
     },
     data: {
       status: "REJECTED",
