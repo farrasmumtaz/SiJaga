@@ -45,9 +45,7 @@ const DashboardSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profileName, setProfileName] = useState(""); // Default name
-  const [availableStatus, setAvailableStatus] = useState<AvailabilityStatus>(
-    "TIDAK ADA BARANG"
-  );
+  const [availableStatus, setAvailableStatus] = useState<AvailabilityStatus | null>(null);
   const [lockerStatus, setLockerStatus] = useState<LockerStatus>("UNLOCKED");
 
   const fetchUserProfile = async () => {
@@ -103,6 +101,7 @@ const DashboardSection = () => {
     // Event handler ketika socket berhasil terhubung
     socket.on("connect", () => {
       console.log("Connected to Socket.io URL");
+      void fetchAvailable();
     });
   
     // Event handler untuk update history
@@ -362,14 +361,14 @@ const DashboardSection = () => {
                   </h2>
                   <p
                     className={`text-md md:text-2xl font-bold ${
-                      loading
+                      loading || availableStatus === null
                         ? "text-gray-300"
                         : availableStatus === "ADA BARANG"
                         ? "text-[#FF4B69]"
                         : "text-[#59DFB5]"
                     }`}
                   >
-                    {loading ? "Memuat..." : (availableStatus).toUpperCase() || "Tidak ditemukan"}
+                    {loading ? "Memuat..." : availableStatus ?? "Menunggu data sensor"}
                   </p>
                 </div>
               </div>
