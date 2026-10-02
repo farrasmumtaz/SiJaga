@@ -24,12 +24,13 @@ bool refresh = false;
 String tap = "KUNCI";
 
 // Konfigurasi WiFi
-const char *ssid = "Fiercelooo";
-const char *password = "10012009";
+const char *ssid = "CPS LAB_2.4G";
+const char *password = "CPSLaboratory";
 
 String API_URL = "https://gewhvhqlzyqcqjqbfonr.supabase.co/rest/v1/";
 String API_KEY = "sb_publishable_2_doS0Q8qbFFf8KqG8AFmg_adKkllCA";
-String BACKEND_URL = "http://10.146.95.125:3000";
+// Sesuaikan jika alamat IPv4 laptop berubah saat berganti jaringan.
+String BACKEND_URL = "http://192.168.0.169:3000";
 
 String TableUsers = "users";
 String TableLogs = "usage_history";
@@ -37,6 +38,56 @@ WiFiClientSecure client;
 
 String uidString = "";
 String status_barang = "";
+String last_reported_status = "";
+unsigned long last_report_attempt_ms = 0;
+unsigned long last_report_success_ms = 0;
+unsigned long last_sensor_sample_ms = 0;
+bool has_report_attempt = false;
+
+void reportBoxStatus(int distance_cm)
+{
+  const unsigned long now = millis();
+  if ((has_report_attempt && now - last_report_attempt_ms < 5000) ||
+      (status_barang == last_reported_status && now - last_report_success_ms < 30000))
+  {
+    return;
+  }
+
+  has_report_attempt = true;
+  last_report_attempt_ms = now;
+
+  HTTPClient http;
+  http.setConnectTimeout(5000);
+  http.setTimeout(15000);
+  if (!http.begin(BACKEND_URL + "/availability/report"))
+  {
+    Serial.println("Box Status: cannot initialize HTTP request");
+    http.end();
+    return;
+  }
+  http.addHeader("Content-Type", "application/json");
+
+  String payload = "{\"status\":\"" + status_barang + "\",\"distance_cm\":" + String(distance_cm) + "}";
+  Serial.println("Box Status Payload: " + payload);
+  int httpCode = http.POST(payload);
+  String response = http.getString();
+
+  Serial.print("Box Status HTTP Code: ");
+  Serial.println(httpCode);
+  Serial.println("Box Status Response: " + response);
+
+  if (httpCode >= 200 && httpCode < 300)
+  {
+    last_reported_status = status_barang;
+    last_report_success_ms = millis();
+  }
+  else if (httpCode < 0)
+  {
+    Serial.println("Box Status Error: " + HTTPClient::errorToString(httpCode));
+  }
+
+  http.end();
+}
 
 void setup()
 {
@@ -45,6 +96,8 @@ void setup()
 
   client.setInsecure();
   Serial.begin(115200);
+  Serial.println("SiJaga firmware: ultrasonic-report-v2");
+  Serial.println("Backend: " + BACKEND_URL);
 
   pinMode(lock, OUTPUT);
   pinMode(led_strip, OUTPUT);
@@ -83,24 +136,39 @@ void loop()
     digitalWrite(LED_BUILTIN, LOW);
 
     // ================= LOGIKA ULTRASONIK =================
-    digitalWrite(TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-
-    long duration = pulseIn(ECHO_PIN, HIGH);
-    int distance_cm = (duration / 2) / 29.1;
-
-    if (distance_cm < 15)
+    if (last_sensor_sample_ms == 0 || millis() - last_sensor_sample_ms >= 500)
     {
-      digitalWrite(LED_R, HIGH);
-      status_barang = "ADA BARANG";
-    }
-    else
-    {
-      digitalWrite(LED_R, LOW);
-      status_barang = "TIDAK ADA BARANG";
+      last_sensor_sample_ms = millis();
+      digitalWrite(TRIG_PIN, LOW);
+      delayMicroseconds(2);
+      digitalWrite(TRIG_PIN, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(TRIG_PIN, LOW);
+
+      long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+      if (duration == 0)
+      {
+        Serial.println("Ultrasonic timeout");
+      }
+      else
+      {
+        int distance_cm = (duration / 2) / 29.1;
+        Serial.print("Ultrasonic distance (cm): ");
+        Serial.println(distance_cm);
+
+        if (distance_cm < 15)
+        {
+          digitalWrite(LED_R, HIGH);
+          status_barang = "ADA BARANG";
+        }
+        else
+        {
+          digitalWrite(LED_R, LOW);
+          status_barang = "TIDAK ADA BARANG";
+        }
+
+        reportBoxStatus(distance_cm);
+      }
     }
 
     // ================= LOGIKA BUTTON REFRESH =================
