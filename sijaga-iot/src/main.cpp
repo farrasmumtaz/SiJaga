@@ -6,8 +6,8 @@
 #include <HTTPClient.h>
 
 const int lock = 17;       // GPIO 17 (Solenoid)
-const int LOCK_OPEN_LEVEL = HIGH;
-const int LOCK_CLOSED_LEVEL = LOW;
+const int LOCK_OPEN_LEVEL = LOW;
+const int LOCK_CLOSED_LEVEL = HIGH;
 const unsigned long LOCK_OPEN_DURATION_MS = 10000;
 const int buzzer = 2;     // GPIO 2 (Buzzer)
 const int led_strip = 3;  // GPIO 3 (Relay LED Strip)
