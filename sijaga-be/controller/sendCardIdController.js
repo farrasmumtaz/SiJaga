@@ -2,7 +2,7 @@ const {
   createCardIdDumpService,
   getLatestCardIdDumpService,
 } = require("../service/sendIdCardService");
-const { getIo } = require("../socket");
+const { emitAdmin } = require("../socket");
 const { resolveCardId } = require("../utils/cardId");
 // Controller to create a CardIdDump
 
@@ -19,10 +19,7 @@ const createCardIdDumpController = async (req, res) => {
 
     const result = await createCardIdDumpService(cardId);
 
-    // SOCKET EMIT
-    const io = getIo();
-
-    io.emit("cardIdDump_latest", result);
+    await emitAdmin("cardIdDump_latest", result);
 
     res.status(201).json({
       status: true,

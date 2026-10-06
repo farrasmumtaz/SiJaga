@@ -81,7 +81,10 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
       try {
         const response = await axios.get<{ data: CardIdResponse }>(
           `${API_BASE_URL}/card-id/latest`,
-          { params: { createdAfter: pageOpenedAt } }
+          {
+            params: { createdAfter: pageOpenedAt },
+            headers: { Authorization: `Bearer ${Cookies.get("token")}` },
+          }
         );
         applyCardScan(response.data.data);
       } catch (err) {
@@ -148,7 +151,11 @@ const SettingSection: React.FC<SettingSectionProps> = ({ onRegisterSuccess }) =>
         card_scan_id: cardScanId,
         password,
       };
-      const response = await axios.post(REGISTER_API_URL, data);
+      const token = Cookies.get("token");
+      if (!token) throw new Error("Silakan login kembali.");
+      const response = await axios.post(REGISTER_API_URL, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       console.log("Response:", response.data);
 

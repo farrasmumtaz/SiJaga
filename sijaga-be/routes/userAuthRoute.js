@@ -5,10 +5,11 @@ const {
   logoutUserController,
 } = require("../controller/userAuthController");
 const { authenticateUser } = require("../middleware/authMiddleware");
+const { requireAdmin } = require("../domain/authorization");
 
 const router = express.Router();
 
-router.post("/register", registerUserController);
+router.post("/register", authenticateUser, requireAdmin, registerUserController);
 router.post("/login", loginUserController);
 router.post("/logout", authenticateUser, logoutUserController);
 

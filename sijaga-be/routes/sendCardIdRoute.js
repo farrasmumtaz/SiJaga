@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { authenticateUser } = require("../middleware/authMiddleware");
+const { requireAdmin } = require("../domain/authorization");
 const {
   createCardIdDumpController,
   getLatestCardIdDumpController,
@@ -9,7 +11,7 @@ const {
 router.post("/create", createCardIdDumpController);
 
 // Route to fetch the latest CardIdDump
-router.get("/latest", getLatestCardIdDumpController);
+router.get("/latest", authenticateUser, requireAdmin, getLatestCardIdDumpController);
 
 
 module.exports = router;

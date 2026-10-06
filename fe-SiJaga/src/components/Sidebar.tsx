@@ -77,7 +77,7 @@ const Sidebar: React.FC = () => {
     { href: "/approval", label: "Approval", icon: FiCheckSquare },
     { href: "/profile", label: "Profil", icon: FiUser },
 
-  ].filter((item) => item.href !== "/approval" || isAdmin);
+  ].filter((item) => !["/approval", "/setting"].includes(item.href) || isAdmin);
 
   return (
     <>
