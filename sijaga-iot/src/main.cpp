@@ -5,8 +5,8 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
-const int lock = 1;       // GPIO 1 (Solenoid) - SESUAI WIRING YANG SUDAH DIRAKIT
-const int buzzer = 2;     // GPIO 2 (Buzzer) - SESUAI WIRING YANG SUDAH DIRAKIT
+const int lock = 17;       // GPIO 10 (Solenoid)
+const int buzzer = 2;     // GPIO 2 (Buzzer)
 const int led_strip = 3;  // GPIO 3 (Relay LED Strip)
 const int LED_R = 4;      // GPIO 4 (LED Indikator Merah)
 const int button = 5;     // GPIO 5 (Tombol Refresh)
@@ -38,6 +38,9 @@ WiFiClientSecure client;
 
 String uidString = "";
 String status_barang = "";
+String last_unlocked_uid = "";
+unsigned long last_unlock_end_ms = 0;
+const unsigned long UNLOCK_COOLDOWN_MS = 5000; // jeda setelah kekunci sebelum UID yang sama bisa trigger lagi
 String last_reported_status = "";
 unsigned long last_report_attempt_ms = 0;
 unsigned long last_report_success_ms = 0;
@@ -107,8 +110,10 @@ void setup()
   pinMode(buzzer, OUTPUT);
   pinMode(button, INPUT_PULLUP);
 
-  // Kondisi Awal: Relay MATI (Solenoid Terkunci & LED Strip MATI)
-  digitalWrite(lock, HIGH);
+  // Kondisi Awal: Solenoid TERKUNCI (relay di-energize via HIGH -> swap dari sebelumnya)
+  // CATATAN: relay module kamu AKTIF-HIGH (bukan aktif-LOW seperti asumsi awal),
+  // jadi logic lock DIBALIK dari kode sebelumnya. led_strip TIDAK diubah.
+  digitalWrite(lock, LOW);       // LOW = relay OFF = solenoid TERKUNCI
   digitalWrite(led_strip, HIGH);
 
   digitalWrite(LED_R, LOW);
@@ -156,7 +161,7 @@ void loop()
         Serial.print("Ultrasonic distance (cm): ");
         Serial.println(distance_cm);
 
-        if (distance_cm < 15)
+        if (distance_cm < 30)
         {
           digitalWrite(LED_R, HIGH);
           status_barang = "ADA BARANG";
@@ -179,7 +184,7 @@ void loop()
     else if (refresh)
     {
       Serial.println("System refreshed");
-      digitalWrite(lock, LOW);
+      digitalWrite(lock, HIGH);      // HIGH = relay ON = solenoid TERBUKA sesaat
       digitalWrite(led_strip, LOW);
       delay(1000);
       ESP.restart();
@@ -202,6 +207,15 @@ void loop()
     content.toUpperCase();
     uidString = content;
     Serial.println(uidString);
+
+    // Cegah re-trigger otomatis kalau kartu yang sama masih nempel di reader
+    // (gak perlu tap ulang, tapi juga gak langsung buka-tutup berulang sendiri)
+    if (uidString == last_unlocked_uid && millis() - last_unlock_end_ms < UNLOCK_COOLDOWN_MS)
+    {
+      mfrc522.PICC_HaltA();
+      mfrc522.PCD_StopCrypto1();
+      return;
+    }
 
     // ================= JALUR PROSES DATABASE =================
     HTTPClient https;
@@ -233,6 +247,8 @@ void loop()
       localHttp.addHeader(
           "Content-Type",
           "application/json");
+
+      localHttp.setTimeout(10000); // 10 detik, default 5 detik kadang kurang
 
       String payload = "{\"cardId\":\"" + uidString + "\"}";
 
@@ -273,6 +289,8 @@ void loop()
             "Content-Type",
             "application/json");
 
+        localHttp.setTimeout(10000); // 10 detik, default 5 detik kadang kurang
+
         String payload = "{\"cardId\":\"" + uidString + "\",\"name\":\"" + status_barang + "\"}";
         int code = localHttp.POST(payload);
 
@@ -287,13 +305,16 @@ void loop()
         {
           Serial.println("Locker OPEN");
 
-          digitalWrite(lock, LOW);
+          digitalWrite(lock, LOW);      // HIGH = relay ON = solenoid TERBUKA
+          digitalWrite(led_strip, HIGH);
+
+          delay(10000); // terbuka selama 1 menit
+
+          digitalWrite(lock, HIGH);       // LOW = relay OFF = solenoid TERKUNCI
           digitalWrite(led_strip, LOW);
 
-          delay(5000);
-
-          digitalWrite(lock, HIGH);
-          digitalWrite(led_strip, HIGH);
+          last_unlocked_uid = uidString;
+          last_unlock_end_ms = millis();
 
           digitalWrite(buzzer, HIGH);
           delay(200);
@@ -314,6 +335,6 @@ void loop()
       Serial.println("Gagal terhubung ke database.");
     }
 
-    delay(2000);
+    delay(500); // dikurangi dari 2000ms -> 500ms biar lebih responsif
   }
 }
