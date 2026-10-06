@@ -384,7 +384,7 @@ const DashboardSection = () => {
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center">
                   <Image
                     src="/logo-gembok.png"
-                    alt="Kondisi SiJaga"
+                    alt="Status Pemakaian Locker"
                     width={48}
                     height={48}
                     className="w-9 h-9"
@@ -392,12 +392,12 @@ const DashboardSection = () => {
                 </div>
                 <div>
                   <h2 className="text-white font-medium text-base md:text-lg opacity-75">
-                    Kondisi SiJaga
+                    Status Pemakaian Locker
                   </h2>
                   <p className="text-lg md:text-2xl font-bold">
                     {loading
                       ? "Memuat..."
-                      : lockerStatus}
+                      : lockerStatus === "LOCKED" ? "DIGUNAKAN" : "TERSEDIA"}
                   </p>
                 </div>
               </div>

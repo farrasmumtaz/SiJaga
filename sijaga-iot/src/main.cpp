@@ -5,7 +5,10 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
-const int lock = 17;       // GPIO 10 (Solenoid)
+const int lock = 17;       // GPIO 17 (Solenoid)
+const int LOCK_OPEN_LEVEL = HIGH;
+const int LOCK_CLOSED_LEVEL = LOW;
+const unsigned long LOCK_OPEN_DURATION_MS = 10000;
 const int buzzer = 2;     // GPIO 2 (Buzzer)
 const int led_strip = 3;  // GPIO 3 (Relay LED Strip)
 const int LED_R = 4;      // GPIO 4 (LED Indikator Merah)
@@ -110,10 +113,8 @@ void setup()
   pinMode(buzzer, OUTPUT);
   pinMode(button, INPUT_PULLUP);
 
-  // Kondisi Awal: Solenoid TERKUNCI (relay di-energize via HIGH -> swap dari sebelumnya)
-  // CATATAN: relay module kamu AKTIF-HIGH (bukan aktif-LOW seperti asumsi awal),
-  // jadi logic lock DIBALIK dari kode sebelumnya. led_strip TIDAK diubah.
-  digitalWrite(lock, LOW);       // LOW = relay OFF = solenoid TERKUNCI
+  // Relay aktif-HIGH: energize untuk menarik solenoid, LOW untuk mengunci.
+  digitalWrite(lock, LOCK_CLOSED_LEVEL);
   digitalWrite(led_strip, HIGH);
 
   digitalWrite(LED_R, LOW);
@@ -184,7 +185,7 @@ void loop()
     else if (refresh)
     {
       Serial.println("System refreshed");
-      digitalWrite(lock, HIGH);      // HIGH = relay ON = solenoid TERBUKA sesaat
+      digitalWrite(lock, LOCK_OPEN_LEVEL);
       digitalWrite(led_strip, LOW);
       delay(1000);
       ESP.restart();
@@ -305,12 +306,13 @@ void loop()
         {
           Serial.println("Locker OPEN");
 
-          digitalWrite(lock, LOW);      // HIGH = relay ON = solenoid TERBUKA
+          digitalWrite(lock, LOCK_OPEN_LEVEL);
           digitalWrite(led_strip, HIGH);
 
-          delay(10000); // terbuka selama 1 menit
+          delay(LOCK_OPEN_DURATION_MS); // Terbuka selama 10 detik.
 
-          digitalWrite(lock, HIGH);       // LOW = relay OFF = solenoid TERKUNCI
+          digitalWrite(lock, LOCK_CLOSED_LEVEL);
+          Serial.println("Locker physically closed");
           digitalWrite(led_strip, LOW);
 
           last_unlocked_uid = uidString;
