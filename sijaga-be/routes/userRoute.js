@@ -16,6 +16,8 @@ const router = express.Router();
 
 // Middleware to authenticate user
 router.use(authenticateUser);
+router.get("/users", requireAdmin, require("../controller/userController").getRegularUsersController);
+router.delete("/users/:id", requireAdmin, require("../controller/userController").deleteRegularUserController);
 
 // Route to get current user details (whoami)
 router.get("/whoami", whoamiController);

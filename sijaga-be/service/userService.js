@@ -56,8 +56,8 @@ const changePasswordService = async (userId, input) => {
 
 const deleteUserService = async (userId) => {
   const normalizedUserId = normalizeUserId(userId);
-  const result = await deleteUser(normalizedUserId);
-  return result;
+  await require("../utils/transaction").retryTransaction(() => require("../repository/userRepository").deleteRegularUser(normalizedUserId));
+  return { message: "Akun pengguna berhasil dihapus." };
 };
 
 const getPendingUsersService = async () => {

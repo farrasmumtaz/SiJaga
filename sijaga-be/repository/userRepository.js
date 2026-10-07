@@ -89,6 +89,13 @@ const rejectUser = async (id) => {
 };
 
 module.exports = {
+  getRegularUsers: () => prisma.user.findMany({ where: { role: "USER" }, select: { id: true, name: true, email: true, card_id: true, status: true }, orderBy: { id: "desc" } }),
+  deleteRegularUser: (id) => prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({ where: { id } });
+    const locker = await tx.lockedStatus.findFirst({ orderBy: [{ Timestamp: "desc" }, { id: "desc" }] });
+    require("../domain/userDeletion").assertDeletableUser(user, locker?.status);
+    await tx.user.delete({ where: { id, role: "USER" } });
+  }, { isolationLevel: "Serializable" }),
   getUserById,
   updateUserProfile,
   changeUserPassword,

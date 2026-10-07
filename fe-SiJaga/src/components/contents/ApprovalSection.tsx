@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { FiCheck, FiRefreshCw, FiX } from "react-icons/fi";
 import { jakarta } from "@/styles/fonts";
+import UserManagement from "./UserManagement";
 
 type PendingUser = {
   id: number;
@@ -211,6 +212,7 @@ const ApprovalSection = () => {
             </div>
           )}
         </div>
+        <UserManagement onDeleted={loadPendingUsers} />
       </div>
     </section>
   );

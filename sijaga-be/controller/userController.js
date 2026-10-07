@@ -168,6 +168,17 @@ const rejectUserController = async (
 };
 
 module.exports = {
+  getRegularUsersController: async (req, res) => {
+    try { return res.json({ success: true, users: await require("../repository/userRepository").getRegularUsers() }); }
+    catch { return res.status(500).json({ success: false, message: "Gagal memuat pengguna." }); }
+  },
+  deleteRegularUserController: async (req, res) => {
+    try {
+      const id = require("../utils/userInput").normalizeUserId(req.params.id);
+      await require("../utils/transaction").retryTransaction(() => require("../repository/userRepository").deleteRegularUser(id));
+      return res.json({ success: true, message: "Akun pengguna berhasil dihapus. Riwayat tetap disimpan." });
+    } catch (error) { return res.status(error.statusCode || (error.code === "P2034" ? 409 : 400)).json({ success: false, message: error.code === "P2034" ? "Data berubah. Silakan coba kembali." : error.message }); }
+  },
   whoamiController,
   getUserDetailsController,
   updateUserProfileController,
