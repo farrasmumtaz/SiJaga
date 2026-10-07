@@ -5,6 +5,7 @@ const { decideLockerAccess } = require("../domain/lockerAccess");
 const { retryTransaction } = require("../utils/transaction");
 const { historyScope } = require("../domain/authorization");
 const { emitHistory } = require("../socket");
+const { sensorSnapshot } = require("../domain/historySnapshot");
 
 // Get all users
 const getAllUsers = async () => {
@@ -18,6 +19,8 @@ const addUsageHistory = async (card_id, status) => {
     throw new Error("User with this card_id does not exist.");
   }
 
+  const sensor = await prisma.boxStatus.findFirst({ orderBy: [{ Timestamp: "desc" }, { id: "desc" }] });
+  const availStatus = sensorSnapshot(sensor);
   const usageHistory = await prisma.usageHistory.create({
     data: {
       Timestamp: new Date(),
@@ -25,6 +28,7 @@ const addUsageHistory = async (card_id, status) => {
       status: status,
       card_id: card_id,
       userId: user.id,
+      availStatus,
     },
   });
 
@@ -126,6 +130,8 @@ const processLockerAccess = async (card_id) => {
           })
         : null;
 
+      const sensor = await transaction.boxStatus.findFirst({ orderBy: [{ Timestamp: "desc" }, { id: "desc" }] });
+      const availStatus = sensorSnapshot(sensor);
       const usageHistory = await transaction.usageHistory.create({
         data: {
           Timestamp: new Date(),
@@ -133,6 +139,7 @@ const processLockerAccess = async (card_id) => {
           status: decision.historyStatus,
           card_id,
           userId: user.id,
+          availStatus,
         },
       });
 
